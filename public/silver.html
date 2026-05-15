@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>白银走势分析 · 因素百科 & 实时看板</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#0c0c1e;color:#e0e0e0;min-height:100vh;padding-bottom:70px}
+.container{max-width:800px;margin:0 auto;padding:0 16px}
+
+.top-nav{position:sticky;top:0;z-index:50;background:#0c0c1e;padding:12px 16px;display:flex;gap:8px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.top-nav button{flex:1;padding:10px;border-radius:10px;border:none;font-size:14px;font-weight:700;cursor:pointer;transition:all .3s;letter-spacing:1px}
+.top-nav button.tab1{background:rgba(192,192,192,0.12);color:#c0c0c0}
+.top-nav button.tab2{background:rgba(64,224,208,0.1);color:#40e0d0}
+.top-nav button.active{transform:scale(1.03);box-shadow:0 4px 15px rgba(0,0,0,0.3)}
+.top-nav button.tab1.active{background:#c0c0c0;color:#0c0c1e}
+.top-nav button.tab2.active{background:#40e0d0;color:#0c0c1e}
+
+.page{display:none}
+.page.active{display:block}
+
+/* Encyclopedia */
+.ency-header{text-align:center;padding:24px 0 12px}
+.ency-header h1{font-size:24px;color:#c0c0c0;letter-spacing:2px;margin-bottom:6px}
+.ency-header .sub{font-size:12px;color:#888;line-height:1.8}
+.ency-header .highlight-box{background:linear-gradient(135deg,rgba(192,192,192,0.08),rgba(192,192,192,0.02));border:1px solid rgba(192,192,192,0.15);border-radius:12px;padding:12px 16px;margin-top:12px;font-size:12px;color:#ccc;line-height:1.8;text-align:left}
+
+.factor-card{background:#111122;border-radius:14px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.06);overflow:hidden;transition:all .3s}
+.factor-card.expanded{border-color:rgba(192,192,192,0.25)}
+.factor-card .f-summary{display:flex;align-items:center;padding:14px 16px;cursor:pointer;gap:10px;transition:background .2s}
+.factor-card .f-summary:hover{background:rgba(255,255,255,0.02)}
+.factor-card .f-icon{font-size:28px;min-width:40px;text-align:center}
+.factor-card .f-info{flex:1}
+.factor-card .f-name{font-size:15px;font-weight:700;color:#fff;margin-bottom:2px}
+.factor-card .f-meta{font-size:11px;color:#888}
+.factor-card .f-correlation{font-size:10px;padding:2px 8px;border-radius:8px;font-weight:600;white-space:nowrap}
+.factor-card .f-correlation.positive{background:rgba(0,230,118,0.15);color:#00e676}
+.factor-card .f-correlation.negative{background:rgba(255,82,82,0.15);color:#ff5252}
+.factor-card .f-stars{color:#c0c0c0;font-size:12px;white-space:nowrap}
+.factor-card .f-expand{color:#555;font-size:18px;transition:transform .3s;min-width:20px;text-align:center}
+.factor-card.expanded .f-expand{transform:rotate(180deg)}
+.factor-card .f-detail{display:none;padding:0 16px 16px;border-top:1px solid rgba(255,255,255,0.04)}
+.factor-card.expanded .f-detail{display:block}
+.factor-card .f-detail .f-principle{font-size:12px;color:#bbb;line-height:1.8;margin:12px 0}
+.factor-card .f-detail .f-data-note{font-size:11px;color:#40e0d0;background:rgba(64,224,208,0.06);padding:8px 12px;border-radius:8px;margin-bottom:10px;line-height:1.6}
+.factor-card .f-links{display:flex;flex-wrap:wrap;gap:6px}
+.factor-card .f-links a{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#c0c0c0;font-size:11px;text-decoration:none;transition:all .2s}
+.factor-card .f-links a:hover{background:rgba(192,192,192,0.1);border-color:rgba(192,192,192,0.3)}
+
+.quick-signal{background:#111122;border-radius:14px;padding:16px;border:1px solid rgba(192,192,192,0.15);margin:16px 0;text-align:center}
+.quick-signal h3{font-size:14px;color:#c0c0c0;margin-bottom:10px}
+.quick-signal .goto-btn{display:inline-block;margin-top:10px;padding:10px 24px;background:linear-gradient(135deg,#40e0d0,#00bcd4);color:#0c0c1e;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer}
+
+.section-title{font-size:13px;font-weight:700;letter-spacing:1px;margin:16px 0 8px;color:#c0c0c0;display:flex;align-items:center;gap:8px}
+.section-title::after{content:'';flex:1;height:1px;background:rgba(192,192,192,0.12)}
+
+@media(max-width:500px){
+  .price-row{grid-template-columns:1fr}
+  .battle-grid{grid-template-columns:1fr}
+  .macro-row{grid-template-columns:repeat(3,1fr)}
+  .accuracy-card .acc-stats{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+
+<!-- Copy all dashboard styles from gold (reuse) -->
+<style>
+/* ====== Page 2: Dashboard ====== */
+.dash-header{text-align:center;padding:20px 0 12px}
+.dash-header h1{font-size:20px;letter-spacing:2px;color:#40e0d0;margin-bottom:4px}
+.dash-header .sub{font-size:11px;color:#888}
+
+.price-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.price-card{background:linear-gradient(135deg,#1a1040,#0d2137);border-radius:14px;padding:16px;text-align:center;border:1px solid rgba(192,192,192,0.12)}
+.price-card .label{font-size:10px;color:#999;letter-spacing:1px;margin-bottom:4px}
+.price-card .value{font-size:24px;font-weight:800;color:#fff}
+.price-card .change{font-size:12px;margin-top:3px}
+.price-card .change.up{color:#00e676}.price-card .change.down{color:#ff5252}
+.price-card.intl .value{color:#c0c0c0}
+.price-card.shfe .value{color:#40e0d0}
+
+.macro-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.macro-card{background:#111122;border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(255,255,255,0.06)}
+.macro-card .m-label{font-size:10px;color:#888;margin-bottom:3px}
+.macro-card .m-value{font-size:16px;font-weight:700;color:#fff}
+.macro-card .m-hint{font-size:9px;color:#555;margin-top:2px}
+
+.update-time{text-align:center;font-size:10px;color:#555;margin-bottom:14px}
+
+.battle-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.battle-col{background:#111122;border-radius:14px;padding:14px;border:1px solid rgba(255,255,255,0.06)}
+.battle-col.bull{border-top:3px solid #00e676}
+.battle-col.bear{border-top:3px solid #ff5252}
+.battle-col .col-title{font-size:14px;font-weight:700;margin-bottom:10px}
+.battle-col.bull .col-title{color:#00e676}
+.battle-col.bear .col-title{color:#ff5252}
+
+.factor-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;margin-bottom:4px;background:rgba(255,255,255,0.02);border-radius:8px;cursor:pointer;transition:all .2s;font-size:12px}
+.factor-item:hover{background:rgba(255,255,255,0.05)}
+.factor-item .f-signal{font-size:10px;padding:1px 6px;border-radius:8px;font-weight:600}
+.factor-item .f-signal.strong{background:rgba(0,230,118,0.12);color:#00e676}
+.factor-item .f-signal.medium{background:rgba(255,193,7,0.12);color:#ffc107}
+.factor-item .f-signal.weak{background:rgba(255,82,82,0.12);color:#ff5252}
+.battle-col.bear .f-signal.strong{background:rgba(255,82,82,0.12);color:#ff5252}
+.battle-col.bear .f-signal.medium{background:rgba(255,193,7,0.12);color:#ffc107}
+.battle-col.bear .f-signal.weak{background:rgba(0,230,118,0.12);color:#00e676}
+
+.score-bar{display:flex;align-items:center;gap:8px;margin:12px 0;padding:12px;background:#111122;border-radius:12px}
+.score-bar .bar-track{flex:1;height:8px;background:#333;border-radius:4px;overflow:hidden;display:flex}
+.score-bar .bar-fill-bull{background:#00e676;transition:width .5s}
+.score-bar .bar-fill-bear{background:#ff5252;transition:width .5s}
+
+.accuracy-card{background:#111122;border-radius:14px;padding:14px;border:1px solid rgba(255,255,255,0.08);margin-bottom:14px}
+.accuracy-card .acc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
+.acc-stat .acc-val{font-size:18px;font-weight:800}
+.acc-stat .acc-label{font-size:9px;color:#888;margin-top:2px}
+.acc-stat .acc-val.green{color:#00e676}.acc-stat .acc-val.red{color:#ff5252}.acc-stat .acc-val.yellow{color:#ffc107}
+
+.query-btn{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#c0c0c0,#a0a0a0);color:#0c0c1e;border:none;border-radius:12px;font-size:16px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .3s;margin-bottom:14px}
+.query-btn:hover{transform:translateY(-1px);box-shadow:0 8px 25px rgba(192,192,192,0.2)}
+.query-btn:active{transform:scale(.98)}
+.query-btn.loading{opacity:.7;pointer-events:none}
+
+.signals-box{background:#111122;border-radius:14px;padding:14px;border:1px solid rgba(255,255,255,0.06);margin-bottom:14px}
+.signal-item{padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;line-height:1.6;cursor:pointer;transition:all .2s}
+.signal-item:hover{color:#c0c0c0}
+.signal-item:last-child{border:none}
+.signal-item .sig-tag{display:inline-block;font-size:9px;padding:1px 5px;border-radius:6px;margin-right:4px;font-weight:600}
+.signal-item .sig-tag.bull-tag{background:rgba(0,230,118,0.12);color:#00e676}
+.signal-item .sig-tag.bear-tag{background:rgba(255,82,82,0.12);color:#ff5252}
+.signal-item .sig-tag.neutral-tag{background:rgba(255,193,7,0.12);color:#ffc107}
+.signal-item .sig-time{font-size:9px;color:#555;float:right}
+
+.summary-box{background:#111122;border-radius:14px;padding:16px;border:1px solid rgba(192,192,192,0.15);margin-bottom:14px}
+.summary-box .sm-conclusion{font-size:15px;font-weight:800;text-align:center;padding:10px 16px;border-radius:10px;margin-bottom:12px;letter-spacing:1px}
+.summary-box .sm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.summary-box .sm-item{background:rgba(255,255,255,0.03);border-radius:8px;padding:8px 10px}
+.summary-box .sm-item .sm-label{font-size:10px;color:#888;margin-bottom:2px}
+.summary-box .sm-item .sm-value{font-size:13px;font-weight:700;color:#fff}
+.summary-box .sm-item .sm-impact{font-size:9px;margin-top:2px}
+.summary-box .sm-advice{font-size:12px;line-height:1.8;color:#ccc;background:rgba(255,255,255,0.02);border-radius:10px;padding:10px 14px;margin-bottom:10px}
+.summary-box .sm-meta{font-size:10px;color:#555;text-align:right}
+.summary-box .sm-key-signals{font-size:11px;color:#bbb;line-height:1.8}
+.summary-box .sm-key-signals li{margin-bottom:4px;list-style:disc;margin-left:16px}
+
+.range-box{background:#111122;border-radius:14px;padding:14px;border:1px solid rgba(255,255,255,0.06);margin-bottom:14px}
+.range-row{display:flex;justify-content:space-between;font-size:11px;padding:4px 0}
+.range-row span:first-child{color:#888}
+.range-row span:last-child{color:#fff;font-weight:600}
+
+.history-item{background:#111122;border-radius:10px;padding:12px;margin-bottom:6px;border:1px solid rgba(255,255,255,0.05)}
+.history-item .h-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.history-item .h-verdict{font-size:13px;font-weight:700}
+.history-item .h-time{font-size:9px;color:#555}
+.history-item .h-price{font-size:10px;color:#888;margin-bottom:3px}
+.history-item .h-scores{display:flex;gap:10px;font-size:10px;margin-bottom:6px}
+.history-item .h-verify{display:flex;gap:6px;margin-top:6px}
+.history-item .verify-btn{padding:3px 10px;border-radius:5px;border:none;font-size:10px;cursor:pointer}
+.history-item .verify-btn.correct{background:rgba(0,230,118,0.12);color:#00e676}
+.history-item .verify-btn.wrong{background:rgba(255,82,82,0.12);color:#ff5252}
+.history-item .h-result{font-size:9px;margin-top:3px}
+.history-item .h-result.correct{color:#00e676}
+.history-item .h-result.wrong{color:#ff5252}
+
+.tab-bar{display:flex;gap:4px;margin-bottom:10px}
+.tab-btn{flex:1;padding:7px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;color:#888;font-size:11px;cursor:pointer;text-align:center;transition:all .2s}
+.tab-btn.active{background:rgba(64,224,208,0.1);color:#40e0d0;border-color:rgba(64,224,208,0.25)}
+.clear-btn{display:block;width:100%;padding:8px;background:transparent;color:#555;border:1px solid #333;border-radius:8px;font-size:11px;cursor:pointer;margin-top:6px}
+.clear-btn:hover{color:#ff5252;border-color:#ff5252}
+
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:100;justify-content:center;align-items:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#1a1a2e;border-radius:16px;padding:24px;max-width:500px;width:100%;border:1px solid rgba(192,192,192,0.15);max-height:80vh;overflow-y:auto}
+.modal-box h3{font-size:16px;color:#c0c0c0;margin-bottom:10px}
+.modal-box p{font-size:12px;color:#ccc;line-height:1.8}
+.modal-box .close-btn{display:block;width:100%;margin-top:14px;padding:10px;background:rgba(255,255,255,0.08);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer}
+.modal-links{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+.modal-links a{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:rgba(255,255,255,0.05);border-radius:6px;color:#c0c0c0;font-size:11px;text-decoration:none}
+
+.footer{text-align:center;padding:20px;font-size:10px;color:#444;line-height:2}
+</style>
+</head>
+<body>
+
+<div class="top-nav">
+  <button class="tab1 active" onclick="switchPage('ency')">📚 因素百科</button>
+  <button class="tab2" onclick="switchPage('dash')">📊 实时看板</button>
+</div>
+
+<div class="container">
+
+<!-- ==================== PAGE 1: ENCYCLOPEDIA ==================== -->
+<div class="page active" id="pageEncy">
+  <div class="ency-header">
+    <h1>🥈 白银涨跌核心因素</h1>
+    <div class="sub">一文看懂：什么在影响银价？<br>白银 = 50% 贵金属属性 + 50% 工业金属属性</div>
+    <div class="highlight-box">
+      💡 <b>白银双重属性</b>：白银既是<b>贵金属</b>（跟随黄金、避险、抗通胀），又是<b>工业金属</b>（光伏、电子、医疗、5G）。简单记：<b>金价↑ + 工业需求↑ + 美元↓ = 银价↑</b>。白银波动性约为黄金的 1.5-2 倍，涨跌都更猛。
+    </div>
+  </div>
+
+  <div class="quick-signal" id="quickSignal">
+    <h3>📡 当前多空信号加载中...</h3>
+    <div style="font-size:12px;color:#888">点击下方按钮跳转实时看板查看详情</div>
+    <button class="goto-btn" onclick="switchPage('dash')">进入实时看板 →</button>
+  </div>
+
+  <div class="section-title">📖 十大核心因素（点击展开）</div>
+
+  <!-- Bullish Section -->
+  <div style="background:rgba(0,230,118,0.04);border-radius:16px;padding:14px;margin-bottom:16px;border:1px solid rgba(0,230,118,0.12)">
+    <div style="font-size:15px;font-weight:700;color:#00e676;margin-bottom:4px">🟢 利多白银因素</div>
+    <div style="font-size:11px;color:#888;margin-bottom:10px">这些因素走强时，银价倾向于上涨</div>
+    <div id="bullEncyList"></div>
+  </div>
+
+  <!-- Bearish Section -->
+  <div style="background:rgba(255,82,82,0.04);border-radius:16px;padding:14px;margin-bottom:16px;border:1px solid rgba(255,82,82,0.12)">
+    <div style="font-size:15px;font-weight:700;color:#ff5252;margin-bottom:4px">🔴 利空白银因素</div>
+    <div style="font-size:11px;color:#888;margin-bottom:10px">这些因素走强时，银价倾向于下跌</div>
+    <div id="bearEncyList"></div>
+  </div>
+
+  <div class="footer">
+    内容仅供参考，不构成投资建议 · 投资有风险，决策需谨慎<br>
+    数据来源：CME · ICE · World Gold Council · Silver Institute · Yahoo Finance
+  </div>
+</div>
+
+<!-- ==================== PAGE 2: DASHBOARD ==================== -->
+<div class="page" id="pageDash">
+  <div class="dash-header">
+    <h1>🥈 白银实时看板</h1>
+    <div class="sub">Silver Dashboard · 多空博弈 · 预测闭环</div>
+  </div>
+
+  <div class="price-row">
+    <div class="price-card intl">
+      <div class="label">🌍 国际现货白银</div>
+      <div class="value" id="silverPrice">--</div>
+      <div class="change" id="silverChange">加载中...</div>
+      <div class="extra" id="silverRmb" style="font-size:12px;color:#c0c0c0;margin-top:6px;font-weight:600">≈ ¥--/克</div>
+    </div>
+    <div class="price-card shfe">
+      <div class="label">📊 白银期货 (SI=F)</div>
+      <div class="value" id="silverFut">--</div>
+      <div class="change" id="silverFutChange">加载中...</div>
+    </div>
+  </div>
+
+  <div class="macro-row">
+    <div class="macro-card">
+      <div class="m-label">🪙 金银比</div>
+      <div class="m-value" id="gsrValue">--</div>
+      <div class="m-hint">高=白银低估</div>
+    </div>
+    <div class="macro-card">
+      <div class="m-label">💵 美元指数</div>
+      <div class="m-value" id="dxyValue">--</div>
+      <div class="m-hint">负相关</div>
+    </div>
+    <div class="macro-card">
+      <div class="m-label">📈 SLV ETF</div>
+      <div class="m-value" id="slvValue">--</div>
+      <div class="m-hint">持仓风向标</div>
+    </div>
+  </div>
+
+  <div class="macro-row">
+    <div class="macro-card">
+      <div class="m-label">😰 VIX 恐慌指数</div>
+      <div class="m-value" id="vixValue">--</div>
+      <div class="m-hint">>20警戒</div>
+    </div>
+    <div class="macro-card">
+      <div class="m-label">📈 美10Y收益率</div>
+      <div class="m-value" id="us10yValue">--</div>
+      <div class="m-hint">负相关</div>
+    </div>
+    <div class="macro-card">
+      <div class="m-label">☀️ 光伏指数</div>
+      <div class="m-value" id="solarValue">--</div>
+      <div class="m-hint">工业需求</div>
+    </div>
+  </div>
+  <div class="update-time" id="updateTime">更新于：--</div>
+
+  <div class="section-title" style="color:#c0c0c0">⚔️ 多空博弈</div>
+  <div class="score-bar">
+    <span style="color:#00e676;font-weight:700;font-size:12px">🟢 看涨</span>
+    <div class="bar-track">
+      <div class="bar-fill-bull" id="bullBar" style="width:50%"></div>
+      <div class="bar-fill-bear" id="bearBar" style="width:50%"></div>
+    </div>
+    <span style="color:#ff5252;font-weight:700;font-size:12px">看跌 🔴</span>
+  </div>
+  <div style="text-align:center;font-size:12px;margin-bottom:10px">
+    综合信号：<span id="verdictText" style="font-weight:700">--</span>
+    &nbsp;|&nbsp; <span id="probText">--</span>
+  </div>
+
+  <div class="battle-grid">
+    <div class="battle-col bull"><div class="col-title">🟢 看涨阵营</div><div id="bullFactors"></div></div>
+    <div class="battle-col bear"><div class="col-title">🔴 看跌阵营</div><div id="bearFactors"></div></div>
+  </div>
+
+  <button class="query-btn" id="queryBtn" onclick="refreshAll()">🔍 一键查询最新信号</button>
+
+  <div class="section-title" style="color:#c0c0c0">🎯 预测准确性闭环</div>
+  <div class="accuracy-card">
+    <div class="acc-stats">
+      <div class="acc-stat"><div class="acc-val green" id="accCorrect">0</div><div class="acc-label">✅ 正确</div></div>
+      <div class="acc-stat"><div class="acc-val red" id="accWrong">0</div><div class="acc-label">❌ 错误</div></div>
+      <div class="acc-stat"><div class="acc-val yellow" id="accPending">0</div><div class="acc-label">⏳ 待验证</div></div>
+      <div class="acc-stat"><div class="acc-val green" id="accRate">--</div><div class="acc-label">📈 准确率</div></div>
+    </div>
+  </div>
+
+  <div class="section-title" style="color:#c0c0c0">📡 最新信号 & 事件</div>
+  <div class="signals-box" id="signalsBox"><div class="signal-item" style="color:#666">点击上方按钮查询最新信号...</div></div>
+
+  <div class="section-title" style="color:#c0c0c0">📋 综合研判总结</div>
+  <div class="summary-box" id="summaryBox"><div style="text-align:center;padding:20px;color:#555;font-size:12px">点击上方按钮查询，自动生成研判总结...</div></div>
+
+  <div class="section-title" style="color:#c0c0c0">📈 白银期货 (SI=F) 今日走势</div>
+  <div class="range-box">
+    <div class="range-row"><span>合约代码</span><span id="rangeCode">SI=F (COMEX)</span></div>
+    <div class="range-row"><span>今开盘</span><span id="rangeOpen">--</span></div>
+    <div class="range-row"><span>最高价</span><span id="rangeHigh" style="color:#ff5252">--</span></div>
+    <div class="range-row"><span>最低价</span><span id="rangeLow" style="color:#00e676">--</span></div>
+    <div class="range-row"><span>最新价</span><span id="rangeLast" style="color:#c0c0c0">--</span></div>
+    <div class="range-row"><span>金银比</span><span id="rangeGsr">--</span></div>
+  </div>
+
+  <div class="section-title" style="color:#c0c0c0">📋 查询历史 & 验证</div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchHistoryTab('all')">全部</button>
+    <button class="tab-btn" onclick="switchHistoryTab('pending')">待验证</button>
+    <button class="tab-btn" onclick="switchHistoryTab('verified')">已验证</button>
+  </div>
+  <div id="historyList"></div>
+  <button class="clear-btn" onclick="clearHistory()">🗑 清空历史记录</button>
+
+  <div class="footer">
+    内容仅供参考，不构成投资建议 · 投资有风险，决策需谨慎<br>
+    数据：Gold-API · Yahoo Finance · TradingView · Silver Institute
+  </div>
+</div>
+
+</div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <h3 id="modalTitle"></h3>
+    <p id="modalBody"></p>
+    <div class="modal-links" id="modalLinks"></div>
+    <button class="close-btn" onclick="closeModal()">关闭</button>
+  </div>
+</div>
+
+<script>
+// ==================== STATE ====================
+let currentHistoryTab='all',currentVerdict=null;
+const STORAGE_KEY='silver_dashboard_history';
+
+function switchPage(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.top-nav button').forEach(b=>b.classList.remove('active'));
+  if(page==='ency'){
+    document.getElementById('pageEncy').classList.add('active');
+    document.querySelector('.top-nav .tab1').classList.add('active');
+  }else{
+    document.getElementById('pageDash').classList.add('active');
+    document.querySelector('.top-nav .tab2').classList.add('active');
+    refreshAll();
+  }
+}
+
+// ==================== API ====================
+async function fetchSilverSpot(){try{const r=await fetch('https://api.gold-api.com/price/XAG');return{price:(await r.json()).price};}catch(e){return null;}}
+async function fetchGoldSpot(){try{const r=await fetch('https://api.gold-api.com/price/XAU');return{price:(await r.json()).price};}catch(e){return null;}}
+async function fetchForexRate(){try{const r=await fetch('https://open.er-api.com/v6/latest/USD');return(await r.json()).rates?.CNY||null;}catch(e){return null;}}
+async function fetchYahoo(sym){try{const r=await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1d`,{headers:{'User-Agent':'Mozilla/5.0'}});return(await r.json()).chart.result[0].meta;}catch(e){return null;}}
+
+function formatPrice(v,dec=2){return v!=null?v.toFixed(dec):'--';}
+
+// ==================== FACTORS ====================
+const bullFactorsData=[
+  {name:'光伏产业需求增长',signal:'strong',detail:'白银是光伏电池核心原材料（银浆），每块光伏板约含15-20克银。全球光伏装机量持续高增长，2025年光伏用银占工业需求超20%，是白银需求增长的最大引擎。'},
+  {name:'工业需求扩张',signal:'strong',detail:'白银在5G通信、新能源汽车、医疗器械、电子元器件中不可或缺。全球制造业扩张 + 电气化趋势推动工业用银量逐年上升，约占白银总需求的50%。'},
+  {name:'美联储降息预期',signal:'medium',detail:'与黄金逻辑一致：降息 → 美元走弱 + 利率下行 → 贵金属整体受益。白银作为"高贝塔黄金"，降息周期中涨幅通常大于黄金。'},
+  {name:'金银比均值回归',signal:'medium',detail:'当前金银比约59倍，处于历史中枢偏低位。若金银比从当前水平回落至50以下，意味着白银相对黄金被低估，白银有补涨空间。历史上金银比极端值后白银往往出现爆发式上涨。'},
+  {name:'地缘政治风险',signal:'medium',detail:'白银同样具有避险属性（虽然弱于黄金）。地缘危机时白银通常跟随黄金上涨，且由于波动性更大，短期涨幅往往超过黄金。'},
+  {name:'库存低位 + 供应约束',signal:'medium',detail:'全球白银矿产量增长缓慢，约70%的白银是铜/铅/锌矿的副产品，主矿产白银仅占30%。矿山资本开支不足 + 矿石品位下降限制供应增长，LBMA和COMEX库存持续下降。'},
+];
+
+const bearFactorsData=[
+  {name:'全球经济衰退风险',signal:'strong',detail:'白银50%需求来自工业，经济衰退 → 工业产出下降 → 白银需求萎缩。这是白银区别于黄金的最大风险——经济下行时白银可能跟跌工业金属。'},
+  {name:'美联储鹰派 / 利率高企',signal:'medium',detail:'利率维持高位 → 美元走强 + 贵金属承压。白银作为零息资产，高利率环境增加了持有成本。'},
+  {name:'光伏补贴退坡',signal:'medium',detail:'若各国削减光伏补贴或贸易壁垒升级（如对中国光伏产品加征关税），将直接影响白银需求预期。美国/欧洲光伏政策变化需密切关注。'},
+  {name:'美元指数走强',signal:'medium',detail:'美元走强 → 以美元计价的银价对非美买家变贵 → 需求下降。银价与美元的负相关度约 -0.7。'},
+  {name:'替代技术发展',signal:'weak',detail:'光伏行业持续推进"去银化"技术（铜浆替代银浆、异质结电池降银耗）。若技术突破，长期将减少光伏用银需求。但目前商业化仍需时间。'},
+  {name:'投资者情绪转向股市',signal:'weak',detail:'白银ETF资金流出 + 投机性净多头持仓减少 → 短期价格承压。当股市表现强劲时，资金从贵金属市场流出。SLV持仓量下降即为预警信号。'},
+];
+
+function signalLabel(s){return s==='strong'?'★★★':s==='medium'?'★★☆':'★☆☆';}
+
+function renderFactors(){
+  document.getElementById('bullFactors').innerHTML=bullFactorsData.map(f=>`
+    <div class="factor-item" onclick="showDetail('${f.name}','${f.detail.replace(/'/g,"\\'")}','bull')"><span>${f.name}</span><span class="f-signal ${f.signal}">${signalLabel(f.signal)}</span></div>`).join('');
+  document.getElementById('bearFactors').innerHTML=bearFactorsData.map(f=>`
+    <div class="factor-item" onclick="showDetail('${f.name}','${f.detail.replace(/'/g,"\\'")}','bear')"><span>${f.name}</span><span class="f-signal ${f.signal}">${signalLabel(f.signal)}</span></div>`).join('');
+  updateScore();
+}
+
+function updateScore(){
+  let bullScore=0,bearScore=0;
+  bullFactorsData.forEach(f=>{bullScore+=f.signal==='strong'?3:f.signal==='medium'?2:1;});
+  bearFactorsData.forEach(f=>{bearScore+=f.signal==='strong'?3:f.signal==='medium'?2:1;});
+  const total=bullScore+bearScore,bullPct=Math.round(bullScore/total*100),bearPct=100-bullPct;
+  document.getElementById('bullBar').style.width=bullPct+'%';
+  document.getElementById('bearBar').style.width=bearPct+'%';
+  let verdict,vcolor;
+  if(bullPct>=60){verdict='偏多 🟢';vcolor='#00e676';}
+  else if(bullPct<=40){verdict='偏空 🔴';vcolor='#ff5252';}
+  else{verdict='中性震荡 🟡';vcolor='#ffc107';}
+  document.getElementById('verdictText').textContent=verdict;document.getElementById('verdictText').style.color=vcolor;
+  document.getElementById('probText').textContent=`看涨 ${bullPct}% : 看跌 ${bearPct}%`;document.getElementById('probText').style.color=vcolor;
+  currentVerdict={verdict,bullPct,bearPct,bullScore,bearScore};
+  updateQuickSignal();
+}
+
+function updateQuickSignal(){
+  const el=document.getElementById('quickSignal');
+  if(!currentVerdict){el.querySelector('h3').textContent='📡 点击进入实时看板获取最新信号';return;}
+  const v=currentVerdict,color=v.bullPct>=60?'#00e676':v.bullPct<=40?'#ff5252':'#ffc107';
+  el.querySelector('h3').innerHTML=`📡 当前信号：<span style="color:${color}">${v.verdict}（看涨${v.bullPct}% : 看跌${v.bearPct}%）</span>`;
+}
+
+// ==================== UI UPDATES ====================
+function updatePriceUI(silver,gold,silverFut,dxy,vix,us10y,slv,usdcny){
+  // Silver spot
+  if(silver){
+    document.getElementById('silverPrice').textContent='$'+silver.price.toFixed(2);
+    document.getElementById('silverChange').innerHTML='<span class="change up">现货实时报价</span>';
+    if(usdcny){
+      const rmbPerGram=silver.price/31.1035*usdcny;
+      document.getElementById('silverRmb').textContent=`≈ ¥${rmbPerGram.toFixed(2)}/克 (汇率 ${usdcny.toFixed(2)})`;
+    }
+  }
+  // Silver futures
+  if(silverFut){
+    document.getElementById('silverFut').textContent='$'+silverFut.regularMarketPrice.toFixed(2);
+    document.getElementById('silverFutChange').innerHTML=`<span class="change up">COMEX 实时</span>`;
+    document.getElementById('rangeCode').textContent='SI=F (COMEX Silver)';
+    document.getElementById('rangeOpen').textContent='$'+formatPrice(silverFut.regularMarketPrice);
+    document.getElementById('rangeHigh').textContent='$'+formatPrice(silverFut.regularMarketDayHigh);
+    document.getElementById('rangeLow').textContent='$'+formatPrice(silverFut.regularMarketDayLow);
+    document.getElementById('rangeLast').textContent='$'+formatPrice(silverFut.regularMarketPrice);
+  }
+  // Gold/Silver ratio
+  if(gold&&silver){
+    const gsr=(gold.price/silver.price).toFixed(1);
+    document.getElementById('gsrValue').textContent=gsr;
+    document.getElementById('gsrValue').style.color=gsr>80?'#00e676':gsr>60?'#ffc107':'#ff5252';
+    document.getElementById('rangeGsr').textContent=gsr+' 倍';
+  }
+  // DXY
+  if(dxy){
+    document.getElementById('dxyValue').textContent=dxy.regularMarketPrice.toFixed(2);
+    document.getElementById('dxyValue').style.color=dxy.regularMarketPrice<100?'#00e676':'#ff5252';
+  }
+  // VIX
+  if(vix){
+    document.getElementById('vixValue').textContent=vix.regularMarketPrice.toFixed(1);
+    document.getElementById('vixValue').style.color=vix.regularMarketPrice>25?'#ff5252':vix.regularMarketPrice>20?'#ffc107':'#00e676';
+  }
+  // US10Y
+  if(us10y)document.getElementById('us10yValue').textContent=us10y.regularMarketPrice.toFixed(3)+'%';
+  // SLV
+  if(slv)document.getElementById('slvValue').textContent='$'+slv.regularMarketPrice.toFixed(2);
+  document.getElementById('updateTime').textContent='更新于：'+new Date().toLocaleTimeString('zh-CN');
+  updateQuickSignal();
+}
+
+// ==================== SIGNALS ====================
+function generateSignals(silver,gold,silverFut,dxy,vix,us10y,slv){
+  const now=new Date(),timeStr=now.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}),signals=[];
+  if(gold&&silver){
+    const gsr=gold.price/silver.price;
+    signals.push({tag:'neutral-tag',text:`当前金银比 ${gsr.toFixed(1)}倍，历史中枢约65倍。比率越高白银相对黄金越便宜`,time:timeStr,type:'neutral'});
+  }
+  if(silverFut&&silver){
+    const chg=silverFut.regularMarketPrice-silver.price;
+    if(Math.abs(chg)>0.5)signals.push({tag:chg>0?'bull-tag':'bear-tag',text:`期货较现货${chg>0?'升水':'贴水'}$${Math.abs(chg).toFixed(2)}，${chg>0?'市场短期看多':'市场短期偏谨慎'}`,time:timeStr,type:chg>0?'bull':'bear'});
+  }
+  if(dxy){
+    const dp=dxy.regularMarketPrice-dxy.chartPreviousClose;
+    if(dp<-0.3)signals.push({tag:'bull-tag',text:`美元指数跌至${dxy.regularMarketPrice.toFixed(1)}，美元走弱利好贵金属`,time:timeStr,type:'bull'});
+    else if(dp>0.3)signals.push({tag:'bear-tag',text:`美元指数升至${dxy.regularMarketPrice.toFixed(1)}，美元走强压制银价`,time:timeStr,type:'bear'});
+  }
+  if(vix&&vix.regularMarketPrice>25)signals.push({tag:'bull-tag',text:`VIX升至${vix.regularMarketPrice.toFixed(0)}，市场恐慌或推动避险买盘`,time:timeStr,type:'bull'});
+  if(slv)signals.push({tag:'neutral-tag',text:`SLV ETF $${slv.regularMarketPrice.toFixed(2)}，全球最大白银ETF，持仓变化反映机构态度`,time:timeStr,type:'neutral'});
+  signals.push({tag:'bull-tag',text:'全球光伏装机持续增长，白银工业需求基本面偏强',time:timeStr,type:'bull'});
+  return signals;
+}
+
+function renderSignals(signals){
+  const box=document.getElementById('signalsBox');
+  if(!signals.length){box.innerHTML='<div class="signal-item" style="color:#666">暂无新信号</div>';return;}
+  box.innerHTML=signals.map(s=>`
+    <div class="signal-item" onclick="showDetail('信号详情','${s.text.replace(/'/g,"\\'")}','${s.type}')">
+      <span class="sig-tag ${s.tag}">${s.type==='bull'?'利多':s.type==='bear'?'利空':'关注'}</span>
+      ${s.text}<span class="sig-time">${s.time}</span>
+    </div>`).join('');
+}
+
+// ==================== SUMMARY ====================
+function renderSummary(silver,gold,silverFut,dxy,vix,us10y,slv,usdcny){
+  const box=document.getElementById('summaryBox');
+  if(!silver){box.innerHTML='<div style="text-align:center;padding:20px;color:#555">等待数据...</div>';return;}
+  if(!currentVerdict)return;
+  const v=currentVerdict,now=new Date(),timeStr=now.toLocaleString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  let bgColor,textColor,conclusionText;
+  if(v.bullPct>=65){bgColor='rgba(0,230,118,0.1)';textColor='#00e676';conclusionText='偏多判断：多方因素占优，短线看涨概率较大';}
+  else if(v.bullPct>=55){bgColor='rgba(255,193,7,0.08)';textColor='#ffc107';conclusionText='谨慎偏多：多方略占优势，需警惕空方反扑';}
+  else if(v.bullPct>=45){bgColor='rgba(255,193,7,0.08)';textColor='#ffc107';conclusionText='中性震荡：多空力量均衡，适合观望或轻仓做T';}
+  else if(v.bullPct>=35){bgColor='rgba(255,82,82,0.08)';textColor='#ff5252';conclusionText='谨慎偏空：空方略占优势，多方需等待信号';}
+  else{bgColor='rgba(255,82,82,0.1)';textColor='#ff5252';conclusionText='偏空判断：空方因素占优，短线承压概率较大';}
+
+  const dataItems=[];
+  dataItems.push({label:'现货白银',value:`$${silver.price.toFixed(2)}/oz`,impact:'实时',impactColor:'#c0c0c0'});
+  if(usdcny)dataItems.push({label:'人民币换算',value:`¥${(silver.price/31.1035*usdcny).toFixed(2)}/克`,impact:`汇率${usdcny.toFixed(2)}`,impactColor:'#888'});
+  if(gold&&silver){const gsr=(gold.price/silver.price).toFixed(1);dataItems.push({label:'金银比',value:gsr+'倍',impact:gsr>70?'白银低估':'正常区间',impactColor:gsr>70?'#00e676':'#888'});}
+  if(dxy)dataItems.push({label:'美元指数 DXY',value:dxy.regularMarketPrice.toFixed(2),impact:dxy.regularMarketPrice<100?'偏弱利多':'偏强利空',impactColor:dxy.regularMarketPrice<100?'#00e676':'#ff5252'});
+  if(vix)dataItems.push({label:'VIX 恐慌',value:vix.regularMarketPrice.toFixed(1),impact:vix.regularMarketPrice>20?'恐慌利多':'平静',impactColor:vix.regularMarketPrice>20?'#00e676':'#888'});
+  if(slv)dataItems.push({label:'SLV ETF',value:'$'+slv.regularMarketPrice.toFixed(2),impact:'机构风向标',impactColor:'#888'});
+
+  const keySignals=[];
+  if(gold&&silver){const gsr=gold.price/silver.price;keySignals.push(`金银比 ${gsr.toFixed(1)}倍（历史中枢65倍，当前${gsr>65?'白银相对低估':'白银估值合理'}）`);}
+  if(dxy){const dp=dxy.regularMarketPrice-dxy.chartPreviousClose;if(Math.abs(dp)>0.2)keySignals.push(`美元${dp>0?'走强':'走弱'}，${dp>0?'压制':'利好'}贵金属板块`);}
+  keySignals.push('白银光伏需求持续增长，工业属性提供基本面支撑');
+  keySignals.push(`综合多空比：看涨${v.bullPct}% : 看跌${v.bearPct}%`);
+
+  let advice;
+  if(v.bullPct>=65)advice='多方因素主导，可考虑逢低布局。白银波动性大（约为黄金1.5-2倍），仓位控制在黄金仓位的60-70%为宜。关注金银比走势，若比价回落则白银可能补涨。';
+  else if(v.bullPct>=55)advice='多空交织偏多方。建议轻仓参与，严格止损。白银波动大，做T空间充足但风险也大。关注COMEX白银期货持仓变化。';
+  else if(v.bullPct>=45)advice='多空均衡，方向不明。建议观望为主。已有仓位可继续持有，新仓等待突破信号。可关注金银比套利机会。';
+  else if(v.bullPct>=35)advice='空方略占优势，注意风险。白银对经济数据敏感度高于黄金，关注全球PMI和工业产出数据。多头等待企稳信号。';
+  else advice='空方因素主导，短期承压。工业需求放缓预期或进一步施压银价。不建议追空，耐心等待技术面超卖后的反弹。';
+
+  box.innerHTML=`
+    <div class="sm-conclusion" style="background:${bgColor};color:${textColor}">${conclusionText}</div>
+    <div class="sm-grid">${dataItems.map(d=>`<div class="sm-item"><div class="sm-label">${d.label}</div><div class="sm-value">${d.value}</div>${d.impact?`<div class="sm-impact" style="color:${d.impactColor}">${d.impact}</div>`:''}</div>`).join('')}</div>
+    <div class="sm-advice">💡 <b>操作建议：</b>${advice}</div>
+    <div class="sm-key-signals"><b>📌 关键信号：</b><ul>${keySignals.map(s=>`<li>${s}</li>`).join('')}</ul></div>
+    <div class="sm-meta">🕐 数据时间：${timeStr} | 数据源：Gold-API · Yahoo Finance | 仅供参考，不构成投资建议</div>`;
+}
+
+// ==================== HISTORY ====================
+function loadHistory(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');}catch(e){return[];}}
+function saveHistory(data){localStorage.setItem(STORAGE_KEY,JSON.stringify(data));}
+
+function autoVerifyLastPrediction(currentPrice){
+  const history=loadHistory(),lastPending=history.find(r=>r.verified===null&&r.silverPrice!=null);
+  if(!lastPending)return null;
+  const prevPrice=lastPending.silverPrice,change=currentPrice-prevPrice;
+  if(Math.abs(change)<0.3)return null;
+  const bullPct=lastPending.bullPct;
+  let correct=null;
+  if(bullPct>=60&&change>0)correct=true;
+  else if(bullPct>=60&&change<0)correct=false;
+  else if(bullPct<=40&&change<0)correct=true;
+  else if(bullPct<=40&&change>0)correct=false;
+  else return null;
+  lastPending.verified=correct;lastPending.verifiedAt=new Date().toISOString();lastPending.autoVerified=true;
+  lastPending.verifyNote=`银价从 $${prevPrice.toFixed(2)} → $${currentPrice.toFixed(2)} (${change>=0?'+':''}${change.toFixed(2)})`;
+  saveHistory(history);return correct;
+}
+
+function saveQueryRecord(silver,gold,silverFut,gsr,dxy,vix,us10y,slv){
+  if(!currentVerdict)return;
+  const v=currentVerdict,now=new Date();
+  if(silver)autoVerifyLastPrediction(silver.price);
+  const record={
+    id:Date.now(),time:now.toISOString(),timeDisplay:now.toLocaleString('zh-CN'),
+    verdict:v.verdict,bullPct:v.bullPct,bearPct:v.bearPct,
+    silverPrice:silver?silver.price:null,goldPrice:gold?gold.price:null,
+    gsr:gsr,dxy:dxy?dxy.regularMarketPrice:null,vix:vix?vix.regularMarketPrice:null,
+    us10y:us10y?us10y.regularMarketPrice:null,slv:slv?slv.regularMarketPrice:null,
+    signals:generateSignals(silver,gold,silverFut,dxy,vix,us10y,slv).map(s=>s.text),
+    verified:null,autoVerified:false
+  };
+  const history=loadHistory();history.unshift(record);
+  if(history.length>200)history.length=200;
+  saveHistory(history);renderHistory();updateAccuracy();
+}
+
+function verifyPrediction(id,correct){
+  const history=loadHistory(),r=history.find(r=>r.id===id);
+  if(r){r.verified=correct;r.verifiedAt=new Date().toISOString();r.autoVerified=false;r.verifyNote=null;saveHistory(history);renderHistory();updateAccuracy();}
+}
+
+function updateAccuracy(){
+  const history=loadHistory();let c=0,w=0,p=0;
+  history.forEach(r=>{if(r.verified===true)c++;else if(r.verified===false)w++;else p++;});
+  document.getElementById('accCorrect').textContent=c;document.getElementById('accWrong').textContent=w;document.getElementById('accPending').textContent=p;
+  document.getElementById('accRate').textContent=c+w>0?(c/(c+w)*100).toFixed(1)+'%':'--';
+}
+
+function renderHistory(){
+  const history=loadHistory();
+  let f;if(currentHistoryTab==='pending')f=history.filter(r=>r.verified===null);else if(currentHistoryTab==='verified')f=history.filter(r=>r.verified!==null);else f=history;
+  const el=document.getElementById('historyList');
+  if(!f.length){el.innerHTML='<div style="text-align:center;padding:20px;color:#555;font-size:12px">暂无记录</div>';return;}
+  el.innerHTML=f.map(r=>{
+    let sHTML='';
+    if(r.verified===true){sHTML=`<div class="h-result correct">✅ 预测正确${r.autoVerified?' 🤖自动':' ✋手动'}</div>`;if(r.verifyNote)sHTML+=`<div style="font-size:9px;color:#666;margin-top:2px">${r.verifyNote}</div>`;}
+    else if(r.verified===false){sHTML=`<div class="h-result wrong">❌ 预测错误${r.autoVerified?' 🤖自动':' ✋手动'}</div>`;if(r.verifyNote)sHTML+=`<div style="font-size:9px;color:#666;margin-top:2px">${r.verifyNote}</div>`;}
+    else sHTML=`<div class="h-verify"><button class="verify-btn correct" onclick="verifyPrediction(${r.id},true)">✅ 正确</button><button class="verify-btn wrong" onclick="verifyPrediction(${r.id},false)">❌ 错误</button></div>`;
+    return `<div class="history-item"><div class="h-header"><span class="h-verdict" style="color:${r.bullPct>=60?'#00e676':r.bullPct<=40?'#ff5252':'#ffc107'}">${r.verdict}</span><span class="h-time">${r.timeDisplay}</span></div><div class="h-price">白银 $${formatPrice(r.silverPrice)} | GSR ${r.gsr}× | DXY ${r.dxy?r.dxy.toFixed(1):'--'}</div><div class="h-scores"><span style="color:#00e676">看涨 ${r.bullPct}%</span><span style="color:#ff5252">看跌 ${r.bearPct}%</span></div>${sHTML}</div>`;
+  }).join('');
+}
+
+function switchHistoryTab(tab){currentHistoryTab=tab;document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));event.target.classList.add('active');renderHistory();}
+function clearHistory(){if(confirm('确定清空所有历史记录？')){localStorage.removeItem(STORAGE_KEY);renderHistory();updateAccuracy();}}
+
+// ==================== MODAL ====================
+function showDetail(title,body,type){
+  document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').textContent=body;
+  const linkMap={
+    '光伏产业需求增长':[{url:'https://www.silverinstitute.org/silver-supply-demand/',text:'Silver Institute 供需'},{url:'https://www.iea.org/reports/solar-pv',text:'IEA 光伏报告'}],
+    '工业需求扩张':[{url:'https://www.silverinstitute.org/silver-supply-demand/',text:'Silver Institute'},{url:'https://tradingeconomics.com/commodity/silver',text:'Trading Economics'}],
+    '美联储降息预期':[{url:'https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html',text:'CME FedWatch'}],
+    '金银比均值回归':[{url:'https://www.tradingview.com/symbols/XAUUSD/',text:'TradingView 黄金'},{url:'https://www.tradingview.com/symbols/XAGUSD/',text:'TradingView 白银'}],
+    '地缘政治风险':[{url:'https://www.matteoiacoviello.com/gpr.htm',text:'GPR 指数'}],
+    '库存低位 + 供应约束':[{url:'https://www.silverinstitute.org/',text:'Silver Institute'}],
+    '全球经济衰退风险':[{url:'https://fred.stlouisfed.org/',text:'FRED 经济数据'}],
+    '美联储鹰派 / 利率高企':[{url:'https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html',text:'CME FedWatch'}],
+    '光伏补贴退坡':[{url:'https://www.iea.org/',text:'IEA 能源政策'}],
+    '美元指数走强':[{url:'https://www.tradingview.com/symbols/TVC-DXY/',text:'TradingView DXY'}],
+    '替代技术发展':[{url:'https://www.pv-tech.org/',text:'PV-Tech 光伏技术'}],
+    '投资者情绪转向股市':[{url:'https://www.spdrgoldshares.com/',text:'SLV ETF 数据'}]
+  };
+  document.getElementById('modalLinks').innerHTML=(linkMap[title]||[]).map(l=>`<a href="${l.url}" target="_blank" rel="noopener">🔗 ${l.text}</a>`).join('');
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('show');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+// ==================== ENCYCLOPEDIA ====================
+const encyclopediaFactors=[
+  {icon:'☀️',name:'光伏产业需求增长',correlation:'positive',stars:5,principle:'白银是光伏电池核心原材料——银浆用于硅片导电。全球光伏装机量爆发式增长，2025年光伏用银突破6000吨，占工业需求超20%。每GW光伏装机约消耗15-20吨白银。这是白银区别于黄金的最独特驱动力。',dataNote:'关注IEA年度光伏报告和Silver Institute供需数据。中国、印度、美国光伏装机增速是核心指标。',links:[{url:'https://www.silverinstitute.org/silver-supply-demand/',text:'Silver Institute 供需'},{url:'https://www.iea.org/reports/solar-pv',text:'IEA 光伏报告'}]},
+  {icon:'🏭',name:'工业需求扩张',correlation:'positive',stars:5,principle:'白银工业需求占总需求约50%，涵盖电子（导电浆料、连接器）、汽车（每辆EV含约1oz银）、医疗（抗菌材料）、5G基站、钎焊合金等。全球电气化 + 制造业升级推动白银工业用量增长。',dataNote:'关注全球PMI指数和工业产出数据。电子行业和汽车行业景气度直接影响白银需求。',links:[{url:'https://www.silverinstitute.org/',text:'Silver Institute 官网'},{url:'https://tradingeconomics.com/commodity/silver',text:'Trading Economics 白银'}]},
+  {icon:'📊',name:'金银比均值回归',correlation:'positive',stars:4,principle:'金银比（Gold/Silver Ratio）衡量的是一盎司黄金可以买多少盎司白银。历史中枢约65倍，极端值可达100+（白银极度低估）或低至30-（白银极度高估）。当金银比从高位回落时，白银往往出现补涨行情，涨幅显著超过黄金。',dataNote:'金银比可实时计算：金价÷银价。当前约59倍，处于中枢偏下。若回升至70+则白银为价值洼地。',links:[{url:'https://www.tradingview.com/symbols/XAUUSD/',text:'TradingView 金'},{url:'https://www.tradingview.com/symbols/XAGUSD/',text:'TradingView 银'}]},
+  {icon:'🏦',name:'美联储降息预期',correlation:'positive',stars:3,principle:'与黄金逻辑一致——降息推动美元走弱、利率下行，贵金属板块整体受益。白银作为"高贝塔黄金"，降息周期的涨幅往往超过黄金（历史数据：降息周期白银涨幅约为黄金的1.5-2倍）。',dataNote:'CME FedWatch实时显示降息概率。若市场定价年内2次以上降息，对白银构成强力支撑。',links:[{url:'https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html',text:'CME FedWatch'}]},
+  {icon:'⛏️',name:'供应端收紧',correlation:'positive',stars:3,principle:'全球白银矿产量增长缓慢：约70%白银作为铜/铅/锌矿副产品产出，矿山资本开支不足 + 矿石品位持续下降限制供应增长。LBMA和COMEX白银库存近年持续下降。供应端刚性为银价提供底部支撑。',dataNote:'关注Silver Institute年度《World Silver Survey》，详列全球矿山产量和回收供应数据。',links:[{url:'https://www.silverinstitute.org/',text:'Silver Institute 矿山数据'}]},
+  {icon:'🌍',name:'地缘政治 + 避险需求',correlation:'positive',stars:2,principle:'白银的避险属性虽弱于黄金，但在严重地缘危机时（如2022年俄乌冲突），白银仍跟随黄金上涨。白银因价格更低、波动更大，在避险行情中短期爆发力可能更强。',dataNote:'地缘政治风险指数（GPR）量化全球紧张程度。VIX恐慌指数>25时白银避险属性凸显。',links:[{url:'https://www.matteoiacoviello.com/gpr.htm',text:'GPR 指数'}]},
+  {icon:'📉',name:'全球经济衰退风险',correlation:'negative',stars:5,principle:'白银最大的风险来源——它有一半是工业金属。经济衰退 → 制造业萎缩 → 工业需求下降 → 银价承压。2020年3月新冠疫情初期白银一度暴跌至$12/oz（跌幅超30%），而黄金仅跌约5%。这使得白银在经济下行期的风险远大于黄金。',dataNote:'关注全球PMI（采购经理人指数）、工业产出、GDP增速。PMI<50是工业需求收缩的预警信号。',links:[{url:'https://fred.stlouisfed.org/',text:'FRED 全球经济数据'},{url:'https://tradingeconomics.com/indicators',text:'Trading Economics 指标'}]},
+  {icon:'💵',name:'美元指数走强',correlation:'negative',stars:4,principle:'与黄金逻辑一致：美元走强 → 以美元计价的白银对非美买家变贵 → 需求下降。银价与美元的负相关度约为-0.7，强于多数大宗商品。',dataNote:'DXY实时数据可在看板查看。DXY<100偏利多白银，>105偏利空。',links:[{url:'https://www.tradingview.com/symbols/TVC-DXY/',text:'TradingView DXY'}]},
+  {icon:'🔬',name:'光伏补贴退坡 / 贸易壁垒',correlation:'negative',stars:3,principle:'若各国削减光伏补贴或对中国光伏产品加征关税，将冲击光伏装机增速，进而影响白银需求预期。美国对东南亚光伏产品的反倾销/反补贴调查、欧洲本土光伏制造政策变化是关键风险点。',dataNote:'关注美国商务部光伏贸易政策、欧盟CBAM碳边境调节机制、中国光伏出口数据。',links:[{url:'https://www.iea.org/policies',text:'IEA 政策数据库'},{url:'https://www.pv-tech.org/',text:'PV-Tech 行业新闻'}]},
+  {icon:'📈',name:'美联储鹰派 / 利率高企',correlation:'negative',stars:3,principle:'利率维持高位 → 持有零息资产（白银）的机会成本增加 → 资金流向生息资产。同时高利率支撑美元走强，对贵金属形成双重压制。',dataNote:'关注美联储议息会议（FOMC）点阵图和鲍威尔讲话。CME FedWatch可实时跟踪降息概率变化。',links:[{url:'https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html',text:'CME FedWatch'},{url:'https://www.federalreserve.gov/newsevents.htm',text:'美联储官网'}]},
+];
+
+function renderEncyclopedia(){
+  const bullish=encyclopediaFactors.filter(f=>f.correlation==='positive');
+  const bearish=encyclopediaFactors.filter(f=>f.correlation==='negative');
+  function card(f,i,s){return `<div class="factor-card" id="factorCard${s}${i}"><div class="f-summary" onclick="toggleFactor('${s}${i}')"><span class="f-icon">${f.icon}</span><div class="f-info"><div class="f-name">${f.name}</div><div class="f-meta">${f.correlation==='positive'?'走强 → 银价↑':'走强 → 银价↓'}</div></div><span class="f-correlation ${f.correlation==='positive'?'positive':'negative'}">${f.correlation==='positive'?'利多':'利空'}</span><span class="f-stars">${'★'.repeat(f.stars)}</span><span class="f-expand">▾</span></div><div class="f-detail"><div class="f-principle">📖 <b>作用原理：</b>${f.principle}</div><div class="f-data-note">📊 ${f.dataNote}</div><div class="f-links">${f.links.map(l=>`<a href="${l.url}" target="_blank" rel="noopener">🔗 ${l.text}</a>`).join('')}</div></div></div>`;}
+  document.getElementById('bullEncyList').innerHTML=bullish.map((f,i)=>card(f,i,'bull')).join('');
+  document.getElementById('bearEncyList').innerHTML=bearish.map((f,i)=>card(f,i,'bear')).join('');
+}
+function toggleFactor(id){const c=document.getElementById('factorCard'+id);if(c)c.classList.toggle('expanded');}
+
+// ==================== MAIN REFRESH ====================
+async function refreshAll(){
+  const btn=document.getElementById('queryBtn');if(btn){btn.classList.add('loading');btn.textContent='⏳ 查询中...';}
+  try{
+    const [silver,gold,silverFut,dxy,vix,us10y,slv,usdcny]=await Promise.all([
+      fetchSilverSpot(),fetchGoldSpot(),fetchYahoo('SI=F'),fetchYahoo('DX-Y.NYB'),fetchYahoo('%5EVIX'),fetchYahoo('%5ETNX'),fetchYahoo('SLV'),fetchForexRate()
+    ]);
+    const gsr=gold&&silver?(gold.price/silver.price).toFixed(1):null;
+    updatePriceUI(silver,gold,silverFut,dxy,vix,us10y,slv,usdcny);
+    const signals=generateSignals(silver,gold,silverFut,dxy,vix,us10y,slv);
+    renderSignals(signals);
+    renderSummary(silver,gold,silverFut,dxy,vix,us10y,slv,usdcny);
+    saveQueryRecord(silver,gold,silverFut,gsr,dxy,vix,us10y,slv);
+  }catch(e){console.error('刷新失败:',e);}
+  if(btn){btn.classList.remove('loading');btn.textContent='🔍 一键查询最新信号';}
+}
+
+// ==================== INIT ====================
+renderEncyclopedia();
+renderFactors();
+refreshAll();
+renderHistory();
+updateAccuracy();
+</script>
+</body>
+</html>

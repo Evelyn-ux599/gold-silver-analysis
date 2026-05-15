@@ -1,65 +1,96 @@
-import Image from "next/image";
+import { getRecentDaily, getFeaturedProjects } from "@/lib/content";
+import Hero from "@/components/Hero";
+import Timeline from "@/components/Timeline";
+import ProjectCard from "@/components/ProjectCard";
+import SkillCard from "@/components/SkillCard";
+
+const SKILLS = [
+  {
+    title: "公众号写作 Skill",
+    description: "Vera 人设 · 标题轮换策略(悬念/反常识/数据) · 6段式文章模板 · 封面自动配色，Agent 可独立完成 80% 写作",
+    produces: "每天 1 篇公众号长文，已产出 6 篇",
+    status: "running" as const,
+  },
+  {
+    title: "AI 新闻自动发布 Skill",
+    description: "多源抓取(arXiv/RSS) · HTML 自动格式化 · 微信草稿创建 · macOS launchd 定时调度",
+    produces: "每天 8:00 自动生成 AI 日报通讯稿",
+    status: "running" as const,
+  },
+  {
+    title: "封面自动生成 Skill",
+    description: "Python Pillow 程序化绘图 · 标题关键词自动匹配4种主题配色 · 发光效果+网格线装饰",
+    produces: "所有文章的微信封面图，无需设计工具",
+    status: "running" as const,
+  },
+  {
+    title: "期权交易分析 Skill",
+    description: "Black-Scholes Greeks 引擎 · Credit Spread 扫描 · Yahoo Finance 真实数据 · 模拟交易+胜率统计",
+    produces: "每天扫描高胜率期权价差信号，$3,000 策略验证中",
+    status: "running" as const,
+  },
+  {
+    title: "黄金走势分析看板",
+    description: "10大因素百科 · 实时金价/沪金/DXY/VIX · 多空博弈概率 · 一键查询+自动验证闭环",
+    produces: "随时查询黄金涨跌信号，预测准确率自动追踪",
+    status: "running" as const,
+  },
+  {
+    title: "白银走势分析看板",
+    description: "6利多+6利空因素 · 光伏/工业独特驱动 · 金银比追踪 · SLV ETF 实时持仓",
+    produces: "白银专属看板，双重属性（贵金属+工业）分析",
+    status: "running" as const,
+  },
+];
 
 export default function Home() {
+  const recentLogs = getRecentDaily(7);
+  const featuredProjects = getFeaturedProjects();
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <>
+      <Hero />
+
+      <section className="max-w-4xl mx-auto px-6 py-16">
+        <div className="text-center mb-10">
+          <h2 className="text-2xl font-bold text-text-primary mb-2 flex items-center justify-center gap-2">
+            <span className="w-1 h-6 rounded-full bg-accent-purple" />
+            Agent 资产
+          </h2>
+          <p className="text-sm text-text-secondary">
+            每一个 Skill = 一个自动化 Agent，积累越多，复利越大
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+          {SKILLS.map((skill) => (
+            <SkillCard key={skill.title} skill={skill} />
+          ))}
         </div>
-      </main>
-    </div>
+      </section>
+
+      <section className="max-w-3xl mx-auto px-6 py-16">
+        <h2 className="text-2xl font-bold text-text-primary mb-8 flex items-center gap-2">
+          <span className="w-1 h-6 rounded-full bg-accent-blue" />
+          最近动态
+        </h2>
+        <Timeline logs={recentLogs} />
+      </section>
+
+      {featuredProjects.length > 0 && (
+        <section className="max-w-5xl mx-auto px-6 py-16">
+          <h2 className="text-2xl font-bold text-text-primary mb-8 flex items-center gap-2">
+            <span className="w-1 h-6 rounded-full bg-accent-teal" />
+            项目档案
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredProjects.map((project) => (
+              <ProjectCard key={project.slug} project={project} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="h-16" />
+    </>
   );
 }

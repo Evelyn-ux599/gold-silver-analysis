@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>黄金走势分析 · 因素百科 & 实时看板</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#0c0c1e;color:#e0e0e0;min-height:100vh;padding-bottom:70px}
+.container{max-width:800px;margin:0 auto;padding:0 16px}
+
+/* ====== Top Tab Nav ====== */
+.top-nav{position:sticky;top:0;z-index:50;background:#0c0c1e;padding:12px 16px;display:flex;gap:8px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.top-nav button{flex:1;padding:10px;border-radius:10px;border:none;font-size:14px;font-weight:700;cursor:pointer;transition:all .3s;letter-spacing:1px}
+.top-nav button.tab1{background:rgba(255,215,0,0.1);color:#ffd700}
+.top-nav button.tab2{background:rgba(64,224,208,0.1);color:#40e0d0}
+.top-nav button.active{transform:scale(1.03);box-shadow:0 4px 15px rgba(0,0,0,0.3)}
+.top-nav button.tab1.active{background:#ffd700;color:#0c0c1e}
+.top-nav button.tab2.active{background:#40e0d0;color:#0c0c1e}
+
+.page{display:none}
+.page.active{display:block}
+
+/* ====== Page 1: Encyclopedia ====== */
+.ency-header{text-align:center;padding:24px 0 12px}
+.ency-header h1{font-size:24px;color:#ffd700;letter-spacing:2px;margin-bottom:6px}
+.ency-header .sub{font-size:12px;color:#888;line-height:1.8}
+.ency-header .highlight-box{background:linear-gradient(135deg,rgba(255,215,0,0.08),rgba(255,215,0,0.02));border:1px solid rgba(255,215,0,0.15);border-radius:12px;padding:12px 16px;margin-top:12px;font-size:12px;color:#ccc;line-height:1.8;text-align:left}
+
+.factor-card{background:#111122;border-radius:14px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.06);overflow:hidden;transition:all .3s}
+.factor-card.expanded{border-color:rgba(255,215,0,0.25)}
+.factor-card .f-summary{display:flex;align-items:center;padding:14px 16px;cursor:pointer;gap:10px;transition:background .2s}
+.factor-card .f-summary:hover{background:rgba(255,255,255,0.02)}
+.factor-card .f-icon{font-size:28px;min-width:40px;text-align:center}
+.factor-card .f-info{flex:1}
+.factor-card .f-name{font-size:15px;font-weight:700;color:#fff;margin-bottom:2px}
+.factor-card .f-meta{font-size:11px;color:#888}
+.factor-card .f-correlation{font-size:10px;padding:2px 8px;border-radius:8px;font-weight:600;white-space:nowrap}
+.factor-card .f-correlation.positive{background:rgba(0,230,118,0.15);color:#00e676}
+.factor-card .f-correlation.negative{background:rgba(255,82,82,0.15);color:#ff5252}
+.factor-card .f-stars{color:#ffd700;font-size:12px;white-space:nowrap}
+.factor-card .f-expand{color:#555;font-size:18px;transition:transform .3s;min-width:20px;text-align:center}
+.factor-card.expanded .f-expand{transform:rotate(180deg)}
+
+.factor-card .f-detail{display:none;padding:0 16px 16px;border-top:1px solid rgba(255,255,255,0.04)}
+.factor-card.expanded .f-detail{display:block}
+.factor-card .f-detail .f-principle{font-size:12px;color:#bbb;line-height:1.8;margin:12px 0}
+.factor-card .f-detail .f-data-note{font-size:11px;color:#40e0d0;background:rgba(64,224,208,0.06);padding:8px 12px;border-radius:8px;margin-bottom:10px;line-height:1.6}
+.factor-card .f-links{display:flex;flex-wrap:wrap;gap:6px}
+.factor-card .f-links a{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#ffd700;font-size:11px;text-decoration:none;transition:all .2s}
+.factor-card .f-links a:hover{background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.3)}
+
+/* Quick signal bar on page 1 */
+.quick-signal{background:#111122;border-radius:14px;padding:16px;border:1px solid rgba(255,215,0,0.15);margin:16px 0;text-align:center}
+.quick-signal h3{font-size:14px;color:#ffd700;margin-bottom:10px}
+.quick-signal .goto-btn{display:inline-block;margin-top:10px;padding:10px 24px;background:linear-gradient(135deg,#40e0d0,#00bcd4);color:#0c0c1e;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;text-decoration:none}
+
+/* ====== Page 2: Dashboard ====== */
+.dash-header{text-align:center;padding:20px 0 12px}
+.dash-header h1{font-size:20px;letter-spacing:2px;color:#40e0d0;margin-bottom:4px}
+.dash-header .sub{font-size:11px;color:#888}
+
+.price-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.price-card{background:linear-gradient(135deg,#1a1040,#0d2137);border-radius:14px;padding:16px;text-align:center;border:1px solid rgba(255,215,0,0.12)}
+.price-card .label{font-size:10px;color:#999;letter-spacing:1px;margin-bottom:4px}
+.price-card .value{font-size:24px;font-weight:800;color:#fff}
+.price-card .change{font-size:12px;margin-top:3px}
+.price-card .change.up{color:#00e676}.price-card .change.down{color:#ff5252}
+.price-card.intl .value{color:#40e0d0}
+.price-card.shfe .value{color:#ffd700}
+
+/* Macro indicators row */
+.macro-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.macro-card{background:#111122;border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(255,255,255,0.06)}
+.macro-card .m-label{font-size:10px;color:#888;margin-bottom:3px}
+.macro-card .m-value{font-size:16px;font-weight:700;color:#fff}
+.macro-card .m-hint{font-size:9px;color:#555;margin-top:2px}
+
+.update-time{text-align:center;font-size:10px;color:#555;margin-bottom:14px}
+
+.section-title{font-size:13px;font-weight:700;letter-spacing:1px;margin:16px 0 8px;color:#40e0d0;display:flex;align-items:center;gap:8px}
+.section-title::after{content:'';flex:1;height:1px;background:rgba(64,224,208,0.12)}
+
+.battle-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.battle-col{background:#111122;border-radius:14px;padding:14px;border:1px solid rgba(255,255,255,0.06)}
+.battle-col.bull{border-top:3px solid #00e676}
+.battle-col.bear{border-top:3px solid #ff5252}
+.battle-col .col-title{font-size:14px;font-weight:700;margin-bottom:10px}
+.battle-col.bull .col-title{color:#00e676}
+.battle-col.bear .col-title{color:#ff5252}
+
+.factor-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;margin-bottom:4px;background:rgba(255,255,255,0.02);border-radius:8px;cursor:pointer;transition:all .2s;font-size:12px}
+.factor-item:hover{background:rgba(255,255,255,0.05)}
+.factor-item .f-signal{font-size:10px;padding:1px 6px;border-radius:8px;font-weight:600}
+.factor-item .f-signal.strong{background:rgba(0,230,118,0.12);color:#00e676}
+.factor-item .f-signal.medium{background:rgba(255,193,7,0.12);color:#ffc107}
+.factor-item .f-signal.weak{background:rgba(255,82,82,0.12);color:#ff5252}
+.battle-col.bear .f-signal.strong{background:rgba(255,82,82,0.12);color:#ff5252}
+.battle-col.bear .f-signal.medium{background:rgba(255,193,7,0.12);color:#ffc107}
+.battle-col.bear .f-signal.weak{background:rgba(0,230,118,0.12);color:#00e676}
+
+.score-bar{display:flex;align-items:center;gap:8px;margin:12px 0;padding:12px;background:#111122;border-radius:12px}
+.score-bar .bar-track{flex:1;height:8px;background:#333;border-radius:4px;overflow:hidden;display:flex}
+.score-bar .bar-fill-bull{background:#00e676;transition:width .5s}
+.score-bar .bar-fill-bear{background:#ff5252;transition:width .5s}
+
+.accuracy-card{background:#111122;border-radius:14px;padding:14px;border:1px solid rgba(255,255,255,0.08);margin-bottom:14px}
+.accuracy-card .acc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center}
+.acc-stat .acc-val{font-size:18px;font-weight:800}
+.acc-stat .acc-label{font-size:9px;color:#888;margin-top:2px}
+.acc-stat .acc-val.green{color:#00e676}
+.acc-stat .acc-val.red{color:#ff5252}
+.acc-stat .acc-val.yellow{color:#ffc107}
+
+.query-btn{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#ffd700,#ffab00);color:#0c0c1e;border:none;border-radius:12px;font-size:16px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .3s;margin-bottom:14px}
+.query-btn:hover{transform:translateY(-1px);box-shadow:0 8px 25px rgba(255,215,0,0.2)}
+.query-btn:active{transform:scale(.98)}
+.query-btn.loading{opacity:.7;pointer-events:none}
+
+.signals-box{background:#111122;border-radius:14px;padding:14px;border:1px solid rgba(255,255,255,0.06);margin-bottom:14px}
+.signal-item{padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;line-height:1.6;cursor:pointer;transition:all .2s}
+.signal-item:hover{color:#ffd700}
+.signal-item:last-child{border:none}
+.signal-item .sig-tag{display:inline-block;font-size:9px;padding:1px 5px;border-radius:6px;margin-right:4px;font-weight:600}
+.signal-item .sig-tag.bull-tag{background:rgba(0,230,118,0.12);color:#00e676}
+.signal-item .sig-tag.bear-tag{background:rgba(255,82,82,0.12);color:#ff5252}
+.signal-item .sig-tag.neutral-tag{background:rgba(255,193,7,0.12);color:#ffc107}
+.signal-item .sig-time{font-size:9px;color:#555;float:right}
+
+.range-box{background:#111122;border-radius:14px;padding:14px;border:1px solid rgba(255,255,255,0.06);margin-bottom:14px}
+.range-row{display:flex;justify-content:space-between;font-size:11px;padding:4px 0}
+.range-row span:first-child{color:#888}
+.range-row span:last-child{color:#fff;font-weight:600}
+
+.history-item{background:#111122;border-radius:10px;padding:12px;margin-bottom:6px;border:1px solid rgba(255,255,255,0.05)}
+.history-item .h-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.history-item .h-verdict{font-size:13px;font-weight:700}
+.history-item .h-time{font-size:9px;color:#555}
+.history-item .h-price{font-size:10px;color:#888;margin-bottom:3px}
+.history-item .h-scores{display:flex;gap:10px;font-size:10px;margin-bottom:6px}
+.history-item .h-verify{display:flex;gap:6px;margin-top:6px}
+.history-item .verify-btn{padding:3px 10px;border-radius:5px;border:none;font-size:10px;cursor:pointer}
+.history-item .verify-btn.correct{background:rgba(0,230,118,0.12);color:#00e676}
+.history-item .verify-btn.wrong{background:rgba(255,82,82,0.12);color:#ff5252}
+.history-item .h-result{font-size:9px;margin-top:3px}
+.history-item .h-result.correct{color:#00e676}
+.history-item .h-result.wrong{color:#ff5252}
+
+.tab-bar{display:flex;gap:4px;margin-bottom:10px}
+.tab-btn{flex:1;padding:7px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;color:#888;font-size:11px;cursor:pointer;text-align:center;transition:all .2s}
+.tab-btn.active{background:rgba(64,224,208,0.1);color:#40e0d0;border-color:rgba(64,224,208,0.25)}
+.clear-btn{display:block;width:100%;padding:8px;background:transparent;color:#555;border:1px solid #333;border-radius:8px;font-size:11px;cursor:pointer;margin-top:6px}
+.clear-btn:hover{color:#ff5252;border-color:#ff5252}
+
+/* Summary Box */
+.summary-box{background:#111122;border-radius:14px;padding:16px;border:1px solid rgba(255,215,0,0.15);margin-bottom:14px}
+.summary-box .sm-conclusion{font-size:15px;font-weight:800;text-align:center;padding:10px 16px;border-radius:10px;margin-bottom:12px;letter-spacing:1px}
+.summary-box .sm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.summary-box .sm-item{background:rgba(255,255,255,0.03);border-radius:8px;padding:8px 10px}
+.summary-box .sm-item .sm-label{font-size:10px;color:#888;margin-bottom:2px}
+.summary-box .sm-item .sm-value{font-size:13px;font-weight:700;color:#fff}
+.summary-box .sm-item .sm-impact{font-size:9px;margin-top:2px}
+.summary-box .sm-advice{font-size:12px;line-height:1.8;color:#ccc;background:rgba(255,255,255,0.02);border-radius:10px;padding:10px 14px;margin-bottom:10px}
+.summary-box .sm-meta{font-size:10px;color:#555;text-align:right}
+.summary-box .sm-key-signals{font-size:11px;color:#bbb;line-height:1.8}
+.summary-box .sm-key-signals li{margin-bottom:4px;list-style:disc;margin-left:16px}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:100;justify-content:center;align-items:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal-box{background:#1a1a2e;border-radius:16px;padding:24px;max-width:500px;width:100%;border:1px solid rgba(255,215,0,0.15);max-height:80vh;overflow-y:auto}
+.modal-box h3{font-size:16px;color:#ffd700;margin-bottom:10px}
+.modal-box p{font-size:12px;color:#ccc;line-height:1.8}
+.modal-box .close-btn{display:block;width:100%;margin-top:14px;padding:10px;background:rgba(255,255,255,0.08);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer}
+.modal-links{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
+.modal-links a{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:rgba(255,255,255,0.05);border-radius:6px;color:#ffd700;font-size:11px;text-decoration:none}
+
+.footer{text-align:center;padding:20px;font-size:10px;color:#444;line-height:2}
+
+@media(max-width:500px){
+  .price-row{grid-template-columns:1fr}
+  .battle-grid{grid-template-columns:1fr}
+  .macro-row{grid-template-columns:repeat(3,1fr)}
+  .price-card .value{font-size:20px}
+  .macro-card .m-value{font-size:13px}
+  .accuracy-card .acc-stats{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- ====== Top Nav ====== -->
+<div class="top-nav">
+  <button class="tab1 active" onclick="switchPage('ency')">📚 因素百科</button>
+  <button class="tab2" onclick="switchPage('dash')">📊 实时看板</button>
+</div>
+
+<div class="container">
+
+<!-- ==================== PAGE 1: ENCYCLOPEDIA ==================== -->
+<div class="page active" id="pageEncy">
+
+  <div class="ency-header">
+    <h1>🥇 黄金涨跌核心因素</h1>
+    <div class="sub">一文看懂：什么在影响金价？<br>每个因素均可追溯至权威数据源</div>
+    <div class="highlight-box">
+      💡 <b>黄金定价核心逻辑</b>：黄金是「零息资产」，其价格主要由 <b>机会成本</b>（利率）、<b>计价货币</b>（美元）和 <b>避险需求</b> 三方博弈决定。简单记：<b>利率↓ + 美元↓ + 恐慌↑ = 金价↑</b>
+    </div>
+  </div>
+
+  <!-- Quick Signal -->
+  <div class="quick-signal" id="quickSignal">
+    <h3>📡 当前多空信号加载中...</h3>
+    <div style="font-size:12px;color:#888">点击下方按钮跳转实时看板查看详情</div>
+    <button class="goto-btn" onclick="switchPage('dash')">进入实时看板 →</button>
+  </div>
+
+  <div class="section-title" style="color:#ffd700">📖 十大核心因素（点击展开）</div>
+
+  <!-- Bullish Section -->
+  <div style="background:rgba(0,230,118,0.04);border-radius:16px;padding:14px;margin-bottom:16px;border:1px solid rgba(0,230,118,0.12)">
+    <div style="font-size:15px;font-weight:700;color:#00e676;margin-bottom:4px">🟢 利多黄金因素</div>
+    <div style="font-size:11px;color:#888;margin-bottom:10px">这些因素走强时，金价倾向于上涨</div>
+    <div id="bullEncyList"></div>
+  </div>
+
+  <!-- Bearish Section -->
+  <div style="background:rgba(255,82,82,0.04);border-radius:16px;padding:14px;margin-bottom:16px;border:1px solid rgba(255,82,82,0.12)">
+    <div style="font-size:15px;font-weight:700;color:#ff5252;margin-bottom:4px">🔴 利空黄金因素</div>
+    <div style="font-size:11px;color:#888;margin-bottom:10px">这些因素走强时，金价倾向于下跌</div>
+    <div id="bearEncyList"></div>
+  </div>
+
+  <div class="footer">
+    内容仅供参考，不构成投资建议 · 投资有风险，决策需谨慎<br>
+    数据来源：CME · ICE · World Gold Council · FRED · CBOE · TradingView
+  </div>
+</div>
+
+<!-- ==================== PAGE 2: DASHBOARD ==================== -->
+<div class="page" id="pageDash">
+
+  <div class="dash-header">
+    <h1>📊 黄金实时看板</h1>
+    <div class="sub">Real-time Gold Dashboard · 多空博弈 · 预测闭环</div>
+  </div>
+
+  <!-- Price Cards -->
+  <div class="price-row">
+    <div class="price-card intl">
+      <div class="label">🌍 国际现货黄金</div>
+      <div class="value" id="intlPrice">--</div>
+      <div class="change" id="intlChange">加载中...</div>
+      <div class="extra" id="intlRmb" style="font-size:12px;color:#40e0d0;margin-top:6px;font-weight:600">≈ ¥--/克</div>
+    </div>
+    <div class="price-card shfe">
+      <div class="label">🇨🇳 沪金 AU2606</div>
+      <div class="value" id="shfePrice">--</div>
+      <div class="change" id="shfeChange">加载中...</div>
+    </div>
+  </div>
+
+  <!-- Macro Indicators -->
+  <div class="macro-row">
+    <div class="macro-card">
+      <div class="m-label">💵 美元指数</div>
+      <div class="m-value" id="dxyValue">--</div>
+      <div class="m-hint">负相关</div>
+    </div>
+    <div class="macro-card">
+      <div class="m-label">😰 VIX 恐慌指数</div>
+      <div class="m-value" id="vixValue">--</div>
+      <div class="m-hint">正相关 &gt;20警戒</div>
+    </div>
+    <div class="macro-card">
+      <div class="m-label">📈 美国10Y收益率</div>
+      <div class="m-value" id="us10yValue">--</div>
+      <div class="m-hint">负相关</div>
+    </div>
+  </div>
+  <div class="update-time" id="updateTime">更新于：--</div>
+
+  <!-- Battle Section -->
+  <div class="section-title">⚔️ 多空博弈</div>
+  <div class="score-bar">
+    <span style="color:#00e676;font-weight:700;font-size:12px">🟢 看涨</span>
+    <div class="bar-track">
+      <div class="bar-fill-bull" id="bullBar" style="width:50%"></div>
+      <div class="bar-fill-bear" id="bearBar" style="width:50%"></div>
+    </div>
+    <span style="color:#ff5252;font-weight:700;font-size:12px">看跌 🔴</span>
+  </div>
+  <div style="text-align:center;font-size:12px;margin-bottom:10px">
+    综合信号：<span id="verdictText" style="font-weight:700">--</span>
+    &nbsp;|&nbsp; <span id="probText">--</span>
+  </div>
+
+  <div class="battle-grid">
+    <div class="battle-col bull">
+      <div class="col-title">🟢 看涨阵营</div>
+      <div id="bullFactors"></div>
+    </div>
+    <div class="battle-col bear">
+      <div class="col-title">🔴 看跌阵营</div>
+      <div id="bearFactors"></div>
+    </div>
+  </div>
+
+  <button class="query-btn" id="queryBtn" onclick="refreshAll()">🔍 一键查询最新信号</button>
+
+  <!-- Accuracy -->
+  <div class="section-title">🎯 预测准确性闭环</div>
+  <div class="accuracy-card">
+    <div class="acc-stats">
+      <div class="acc-stat"><div class="acc-val green" id="accCorrect">0</div><div class="acc-label">✅ 正确</div></div>
+      <div class="acc-stat"><div class="acc-val red" id="accWrong">0</div><div class="acc-label">❌ 错误</div></div>
+      <div class="acc-stat"><div class="acc-val yellow" id="accPending">0</div><div class="acc-label">⏳ 待验证</div></div>
+      <div class="acc-stat"><div class="acc-val green" id="accRate">--</div><div class="acc-label">📈 准确率</div></div>
+    </div>
+  </div>
+
+  <!-- Signals -->
+  <div class="section-title">📡 最新信号 & 事件</div>
+  <div class="signals-box" id="signalsBox"><div class="signal-item" style="color:#666">点击上方按钮查询最新信号...</div></div>
+
+  <!-- Summary Analysis -->
+  <div class="section-title">📋 综合研判总结</div>
+  <div class="summary-box" id="summaryBox">
+    <div style="text-align:center;padding:20px;color:#555;font-size:12px">点击上方按钮查询，自动生成研判总结...</div>
+  </div>
+
+  <!-- Range -->
+  <div class="section-title">📈 沪金 AU2606 今日走势</div>
+  <div class="range-box">
+    <div class="range-row"><span>合约代码</span><span id="rangeCode">AU2606</span></div>
+    <div class="range-row"><span>今开盘</span><span id="rangeOpen">--</span></div>
+    <div class="range-row"><span>最高价</span><span id="rangeHigh" style="color:#ff5252">--</span></div>
+    <div class="range-row"><span>最低价</span><span id="rangeLow" style="color:#00e676">--</span></div>
+    <div class="range-row"><span>最新价</span><span id="rangeLast" style="color:#ffd700">--</span></div>
+    <div class="range-row"><span>涨跌幅</span><span id="rangeChg">--</span></div>
+    <div class="range-row"><span>日内振幅</span><span id="rangeAmp">--</span></div>
+  </div>
+
+  <!-- History -->
+  <div class="section-title">📋 查询历史 & 验证</div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchHistoryTab('all')">全部</button>
+    <button class="tab-btn" onclick="switchHistoryTab('pending')">待验证</button>
+    <button class="tab-btn" onclick="switchHistoryTab('verified')">已验证</button>
+  </div>
+  <div id="historyList"></div>
+  <button class="clear-btn" onclick="clearHistory()">🗑 清空历史记录</button>
+
+  <div class="footer">
+    内容仅供参考，不构成投资建议 · 投资有风险，决策需谨慎<br>
+    金价数据：东方财富 / Gold-API · 宏观数据：Yahoo Finance
+  </div>
+</div>
+
+</div><!-- container -->
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <h3 id="modalTitle"></h3>
+    <p id="modalBody"></p>
+    <div class="modal-links" id="modalLinks"></div>
+    <button class="close-btn" onclick="closeModal()">关闭</button>
+  </div>
+</div>
+
+<script>
+// ==================== GLOBAL STATE ====================
+let currentHistoryTab = 'all';
+let currentVerdict = null;
+let latestPrices = {intl:null,shfe:null,dxy:null,vix:null,us10y:null};
+const STORAGE_KEY = 'gold_dashboard_history';
+
+// ==================== PAGE SWITCHING ====================
+function switchPage(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.top-nav button').forEach(b=>b.classList.remove('active'));
+  if(page==='ency'){
+    document.getElementById('pageEncy').classList.add('active');
+    document.querySelector('.top-nav .tab1').classList.add('active');
+  }else{
+    document.getElementById('pageDash').classList.add('active');
+    document.querySelector('.top-nav .tab2').classList.add('active');
+    refreshAll(); // refresh data when switching to dashboard
+  }
+}
+
+// ==================== API CALLS ====================
+async function fetchForexRate(){
+  try{
+    const resp=await fetch('https://open.er-api.com/v6/latest/USD');
+    const d=await resp.json();
+    return d.rates?.CNY||null;
+  }catch(e){return null;}
+}
+
+async function fetchGoldPrice(){
+  try{
+    const resp = await fetch('https://api.gold-api.com/price/XAU');
+    return {price:(await resp.json()).price};
+  }catch(e){return null;}
+}
+
+async function fetchAU2606(){
+  try{
+    const resp = await fetch('https://push2.eastmoney.com/api/qt/stock/get?secid=113.AU2606&fields=f43,f44,f45,f46,f47,f57,f58,f169,f170,f171');
+    const d = await resp.json();
+    if(!d.data)return null;
+    return {price:d.data.f43/100,high:d.data.f44/100,low:d.data.f45/100,open:d.data.f46/100,chg:d.data.f170/100,chgPct:d.data.f169/100,code:d.data.f57,name:d.data.f58,volume:d.data.f47};
+  }catch(e){return null;}
+}
+
+async function fetchYahoo(symbol){
+  try{
+    const resp = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`,{headers:{'User-Agent':'Mozilla/5.0'}});
+    const d = await resp.json();
+    return d.chart.result[0].meta;
+  }catch(e){return null;}
+}
+
+function formatPrice(v,dec=2){return v!=null?v.toFixed(dec):'--';}
+
+// ==================== UI UPDATES ====================
+function updatePriceUI(intl,shfe,dxy,vix,us10y,usdcny){
+  latestPrices = {intl,shfe,dxy,vix,us10y,usdcny};
+  // Gold prices
+  if(intl){
+    document.getElementById('intlPrice').textContent='$'+intl.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    document.getElementById('intlChange').innerHTML='<span class="change up">现货实时报价</span>';
+    // RMB conversion
+    if(usdcny){
+      const rmbPerGram = intl.price / 31.1035 * usdcny;
+      document.getElementById('intlRmb').textContent = `≈ ¥${rmbPerGram.toFixed(2)}/克 (汇率 ${usdcny.toFixed(2)})`;
+    }
+  }
+  if(shfe){
+    document.getElementById('shfePrice').textContent='¥'+formatPrice(shfe.price);
+    const sign=shfe.chg>=0?'+':'',cls=shfe.chg>=0?'up':'down';
+    document.getElementById('shfeChange').innerHTML=`<span class="change ${cls}">${sign}${formatPrice(shfe.chg)} (${sign}${formatPrice(shfe.chgPct)}%)</span>`;
+    document.getElementById('rangeCode').textContent=shfe.code+' '+shfe.name;
+    document.getElementById('rangeOpen').textContent='¥'+formatPrice(shfe.open);
+    document.getElementById('rangeHigh').textContent='¥'+formatPrice(shfe.high);
+    document.getElementById('rangeLow').textContent='¥'+formatPrice(shfe.low);
+    document.getElementById('rangeLast').textContent='¥'+formatPrice(shfe.price);
+    document.getElementById('rangeChg').textContent=`${sign}${formatPrice(shfe.chg)} (${sign}${formatPrice(shfe.chgPct)}%)`;
+    document.getElementById('rangeAmp').textContent=formatPrice(shfe.high-shfe.low)+' 元/克';
+  }
+  // Macro
+  if(dxy){
+    document.getElementById('dxyValue').textContent=dxy.regularMarketPrice.toFixed(2);
+    const dxyChg=dxy.regularMarketPrice-dxy.chartPreviousClose;
+    document.getElementById('dxyValue').style.color=dxyChg<0?'#00e676':'#ff5252';
+  }
+  if(vix){
+    document.getElementById('vixValue').textContent=vix.regularMarketPrice.toFixed(1);
+    document.getElementById('vixValue').style.color=vix.regularMarketPrice>25?'#ff5252':vix.regularMarketPrice>20?'#ffc107':'#00e676';
+  }
+  if(us10y){
+    document.getElementById('us10yValue').textContent=us10y.regularMarketPrice.toFixed(3)+'%';
+  }
+  document.getElementById('updateTime').textContent='更新于：'+new Date().toLocaleTimeString('zh-CN');
+  updateQuickSignal();
+}
+
+function updateQuickSignal(){
+  const el=document.getElementById('quickSignal');
+  if(!currentVerdict){el.querySelector('h3').textContent='📡 点击进入实时看板获取最新信号';return;}
+  const v=currentVerdict;
+  const color=v.bullPct>=60?'#00e676':v.bullPct<=40?'#ff5252':'#ffc107';
+  el.querySelector('h3').innerHTML=`📡 当前信号：<span style="color:${color}">${v.verdict}（看涨${v.bullPct}% : 看跌${v.bearPct}%）</span>`;
+}
+
+// ==================== FACTORS ====================
+const bullFactorsData = [
+  {name:'美联储降息预期',signal:'strong',detail:'市场定价显示美联储年内降息概率超过60%，利率下行利好黄金。历史数据显示，降息周期中黄金平均涨幅约20-30%。'},
+  {name:'全球央行持续购金',signal:'strong',detail:'2024年全球央行购金量连续第三年超1000吨。中国央行连续18个月增持，波兰、印度等也在积极购金。央行购金是金价最坚实的底部支撑。'},
+  {name:'地缘政治风险',signal:'medium',detail:'中东局势持续紧张、俄乌冲突未见缓和、全球贸易摩擦加剧。地缘不确定性推升避险需求，资金流入黄金ETF。'},
+  {name:'通胀韧性超预期',signal:'medium',detail:'核心PCE仍高于美联储2%目标，服务业通胀粘性强。实际利率下行空间打开，黄金抗通胀吸引力增强。'},
+  {name:'美元指数走弱',signal:'medium',detail:'美元指数近期处于100以下，从2022年高点115显著回落。若进一步跌破98关口，将为黄金提供更强上行动力。'},
+  {name:'美债实际收益率下行',signal:'medium',detail:'10年期TIPS收益率回落，持有黄金的机会成本降低。实际利率与金价呈高度负相关，是黄金定价的核心变量。'}
+];
+
+const bearFactorsData = [
+  {name:'美联储鹰派风险',signal:'medium',detail:'部分美联储官员仍强调"更高更久"的利率路径。若就业和通胀数据持续强劲，降息时点可能进一步推迟，对黄金形成压力。'},
+  {name:'风险偏好回升',signal:'medium',detail:'全球股市尤其是AI科技股持续走强，吸引资金从避险资产流向风险资产。黄金ETF持仓量近期出现小幅下降。'},
+  {name:'技术面超买回调',signal:'strong',detail:'金价自年初以来累计涨幅超30%，RSI指标一度触及75上方。短期技术面存在回调需求，部分多头获利了结。近期大跌8%即是超买回调体现。'},
+  {name:'通胀预期回落',signal:'weak',detail:'密歇根大学通胀预期调查显示消费者对未来通胀预期有所降温。若通胀持续回落，黄金的保值需求将减弱。'},
+  {name:'美国经济数据强劲',signal:'medium',detail:'若非农就业、GDP等数据持续超预期，将降低美联储降息紧迫性，推高美元与实际利率，压制金价。'},
+  {name:'地缘局势缓和',signal:'weak',detail:'部分冲突地区出现和谈信号，若地缘风险溢价消退，黄金的避险买盘将减少。但目前信号尚不明确。'}
+];
+
+function signalLabel(s){return s==='strong'?'★★★':s==='medium'?'★★☆':'★☆☆';}
+
+function renderFactors(){
+  document.getElementById('bullFactors').innerHTML=bullFactorsData.map(f=>`
+    <div class="factor-item" onclick="showDetail('${f.name}','${f.detail.replace(/'/g,"\\'")}','bull')">
+      <span>${f.name}</span><span class="f-signal ${f.signal}">${signalLabel(f.signal)}</span>
+    </div>`).join('');
+  document.getElementById('bearFactors').innerHTML=bearFactorsData.map(f=>`
+    <div class="factor-item" onclick="showDetail('${f.name}','${f.detail.replace(/'/g,"\\'")}','bear')">
+      <span>${f.name}</span><span class="f-signal ${f.signal}">${signalLabel(f.signal)}</span>
+    </div>`).join('');
+  updateScore();
+}
+
+function updateScore(){
+  let bullScore=0,bearScore=0;
+  bullFactorsData.forEach(f=>{bullScore+=f.signal==='strong'?3:f.signal==='medium'?2:1;});
+  bearFactorsData.forEach(f=>{bearScore+=f.signal==='strong'?3:f.signal==='medium'?2:1;});
+  const total=bullScore+bearScore,bullPct=Math.round(bullScore/total*100),bearPct=100-bullPct;
+  document.getElementById('bullBar').style.width=bullPct+'%';
+  document.getElementById('bearBar').style.width=bearPct+'%';
+  let verdict,vcolor;
+  if(bullPct>=60){verdict='偏多 🟢';vcolor='#00e676';}
+  else if(bullPct<=40){verdict='偏空 🔴';vcolor='#ff5252';}
+  else{verdict='中性震荡 🟡';vcolor='#ffc107';}
+  document.getElementById('verdictText').textContent=verdict;
+  document.getElementById('verdictText').style.color=vcolor;
+  document.getElementById('probText').textContent=`看涨 ${bullPct}% : 看跌 ${bearPct}%`;
+  document.getElementById('probText').style.color=vcolor;
+  currentVerdict={verdict,bullPct,bearPct,bullScore,bearScore};
+  updateQuickSignal();
+}
+
+// ==================== SIGNALS ====================
+function generateSignals(shfe,intl,dxy,vix,us10y){
+  const now=new Date(),timeStr=now.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+  const signals=[];
+  if(shfe){
+    if(shfe.chgPct<-2)signals.push({tag:'bear-tag',text:'沪金日内跌超2%，短期空方主导，关注1000元/克整数关口支撑',time:timeStr,type:'bear'});
+    else if(shfe.chgPct>1.5)signals.push({tag:'bull-tag',text:'沪金日内涨超1.5%，多头力量增强',time:timeStr,type:'bull'});
+    if(shfe.high-shfe.low>20)signals.push({tag:'neutral-tag',text:`日内振幅${formatPrice(shfe.high-shfe.low)}元/克，波动剧烈，做T需谨慎`,time:timeStr,type:'neutral'});
+    if(shfe.price<1010)signals.push({tag:'bull-tag',text:'金价接近1000元心理关口，整数关口附近常有技术性反弹',time:timeStr,type:'bull'});
+  }
+  if(intl){
+    if(intl.price>4500)signals.push({tag:'bull-tag',text:`国际金价站稳$4,500上方，中长期上行趋势完好`,time:timeStr,type:'bull'});
+    if(intl.price<4400)signals.push({tag:'bear-tag',text:'国际金价跌破$4,400支撑位',time:timeStr,type:'bear'});
+  }
+  if(dxy){
+    const dp=dxy.regularMarketPrice-dxy.chartPreviousClose;
+    if(dp<-0.3)signals.push({tag:'bull-tag',text:`美元指数跌至${dxy.regularMarketPrice.toFixed(1)}，美元走弱利好黄金`,time:timeStr,type:'bull'});
+    else if(dp>0.3)signals.push({tag:'bear-tag',text:`美元指数升至${dxy.regularMarketPrice.toFixed(1)}，美元走强压制金价`,time:timeStr,type:'bear'});
+  }
+  if(vix&&vix.regularMarketPrice>25)signals.push({tag:'bull-tag',text:`VIX升至${vix.regularMarketPrice.toFixed(0)}，市场恐慌情绪升温，避险利好黄金`,time:timeStr,type:'bull'});
+  if(us10y&&us10y.regularMarketPrice>4.5)signals.push({tag:'bear-tag',text:`10Y美债收益率${us10y.regularMarketPrice.toFixed(2)}%高位，持有黄金机会成本增加`,time:timeStr,type:'bear'});
+  signals.push({tag:'neutral-tag',text:'关注今晚美国经济数据发布，可能影响美元短线走势',time:timeStr,type:'neutral'});
+  return signals;
+}
+
+function renderSignals(signals){
+  const box=document.getElementById('signalsBox');
+  if(!signals.length){box.innerHTML='<div class="signal-item" style="color:#666">暂无新信号</div>';return;}
+  box.innerHTML=signals.map(s=>`
+    <div class="signal-item" onclick="showDetail('信号详情','${s.text.replace(/'/g,"\\'")}','${s.type}')">
+      <span class="sig-tag ${s.tag}">${s.type==='bull'?'利多':s.type==='bear'?'利空':'关注'}</span>
+      ${s.text}<span class="sig-time">${s.time}</span>
+    </div>`).join('');
+}
+
+function renderSummary(shfe,intl,dxy,vix,us10y){
+  const box=document.getElementById('summaryBox');
+  if(!shfe && !intl){box.innerHTML='<div style="text-align:center;padding:20px;color:#555;font-size:12px">等待数据加载...</div>';return;}
+  if(!currentVerdict){box.innerHTML='<div style="text-align:center;padding:20px;color:#555;font-size:12px">点击查询按钮生成研判总结</div>';return;}
+
+  const v=currentVerdict;
+  const now=new Date();
+  const timeStr=now.toLocaleString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+
+  // Determine overall direction
+  let bgColor,textColor,conclusionText;
+  if(v.bullPct>=65){bgColor='rgba(0,230,118,0.1)';textColor='#00e676';conclusionText='偏多判断：多方因素占优，短线看涨概率较大';}
+  else if(v.bullPct>=55){bgColor='rgba(255,193,7,0.08)';textColor='#ffc107';conclusionText='谨慎偏多：多方略占优势，但需警惕空方反扑';}
+  else if(v.bullPct>=45){bgColor='rgba(255,193,7,0.08)';textColor='#ffc107';conclusionText='中性震荡：多空力量均衡，适合观望或轻仓做T';}
+  else if(v.bullPct>=35){bgColor='rgba(255,82,82,0.08)';textColor='#ff5252';conclusionText='谨慎偏空：空方略占优势，多方需等待信号';}
+  else{bgColor='rgba(255,82,82,0.1)';textColor='#ff5252';conclusionText='偏空判断：空方因素占优，短线承压概率较大';}
+
+  // Build data items
+  const dataItems=[];
+  if(shfe){
+    dataItems.push({label:'沪金 AU2606',value:`¥${formatPrice(shfe.price)}`,impact:shfe.chgPct>=0?'日内上涨▲':'日内下跌▼',impactColor:shfe.chgPct>=0?'#00e676':'#ff5252'});
+    dataItems.push({label:'日内振幅',value:`${formatPrice(shfe.high-shfe.low)} 元/克`,impact:shfe.high-shfe.low>25?'剧烈波动⚠️':'波动正常',impactColor:shfe.high-shfe.low>25?'#ffc107':'#888'});
+  }
+  if(intl){
+    dataItems.push({label:'国际现货',value:`$${intl.price.toFixed(0)}/oz`,impact:intl.price>4550?'高位运行':'',impactColor:'#ffd700'});
+  }
+  if(dxy){
+    const dxyChg=dxy.regularMarketPrice-dxy.chartPreviousClose;
+    dataItems.push({label:'美元指数 DXY',value:dxy.regularMarketPrice.toFixed(2),impact:dxyChg<-0.2?'走弱→利多黄金':'走强→利空黄金',impactColor:dxyChg<-0.2?'#00e676':'#ff5252'});
+  }
+  if(vix){
+    dataItems.push({label:'VIX 恐慌指数',value:vix.regularMarketPrice.toFixed(1),impact:vix.regularMarketPrice>25?'恐慌→避险利多':vix.regularMarketPrice>20?'警惕→偏利多':'平静',impactColor:vix.regularMarketPrice>20?'#00e676':'#888'});
+  }
+  if(us10y){
+    dataItems.push({label:'美10Y收益率',value:us10y.regularMarketPrice.toFixed(3)+'%',impact:us10y.regularMarketPrice>4.5?'高位→利空黄金':'',impactColor:us10y.regularMarketPrice>4.5?'#ff5252':'#888'});
+  }
+
+  // Key signals summary
+  const keySignals=[];
+  if(shfe){
+    if(shfe.chgPct<-1.5)keySignals.push('沪金日内下跌超1.5%，空方主导短线节奏');
+    else if(shfe.chgPct>1.5)keySignals.push('沪金日内上涨超1.5%，多方主导短线节奏');
+    if(shfe.price<1010&&shfe.price>990)keySignals.push('金价接近1000元心理关口，关注整数位支撑力度');
+  }
+  if(dxy){
+    const dxyChg=dxy.regularMarketPrice-dxy.chartPreviousClose;
+    if(dxyChg<-0.3)keySignals.push('美元走弱为黄金提供短期支撑');
+    else if(dxyChg>0.3)keySignals.push('美元走强对黄金形成短期压力');
+  }
+  if(vix&&vix.regularMarketPrice>25)keySignals.push('VIX升至警戒区，市场恐慌情绪或推动避险买盘');
+  if(us10y&&us10y.regularMarketPrice>4.5)keySignals.push('10年期美债收益率高位运行，黄金持有成本偏高');
+  keySignals.push(`综合多空比：看涨${v.bullPct}% : 看跌${v.bearPct}%`);
+
+  // Advice
+  let advice;
+  if(v.bullPct>=65)advice='多方因素主导，短线可考虑逢低做多。重点关注1000元整数关口支撑，若跌破需止损。不建议重仓追高，分批建仓更稳健。';
+  else if(v.bullPct>=55)advice='多空交织，多方略占优。建议轻仓参与，严格设好止盈止损。适合小仓位做T，快进快出。等待更明确的方向信号再加大仓位。';
+  else if(v.bullPct>=45)advice='多空均衡，方向不明。建议观望为主，减少操作频率。已有仓位可继续持有，不宜加仓。做T空间有限，等待突破信号。';
+  else if(v.bullPct>=35)advice='空方略占优势，建议谨慎。多头需等待金价企稳或基本面出现利多变化。已有多仓注意风险管理，可适当减仓。';
+  else advice='空方因素主导，短期承压。不建议追空，已有获利的空单可逐步止盈。多方耐心等待技术面超卖后的反弹机会。';
+
+  box.innerHTML=`
+    <div class="sm-conclusion" style="background:${bgColor};color:${textColor}">${conclusionText}</div>
+    <div class="sm-grid">${dataItems.map(d=>`
+      <div class="sm-item">
+        <div class="sm-label">${d.label}</div>
+        <div class="sm-value">${d.value}</div>
+        ${d.impact?`<div class="sm-impact" style="color:${d.impactColor}">${d.impact}</div>`:''}
+      </div>`).join('')}
+    </div>
+    <div class="sm-advice">💡 <b>操作建议：</b>${advice}</div>
+    <div class="sm-key-signals">
+      <b>📌 关键信号：</b>
+      <ul>${keySignals.map(s=>`<li>${s}</li>`).join('')}</ul>
+    </div>
+    <div class="sm-meta">🕐 数据时间：${timeStr} | 数据源：东方财富 · Yahoo Finance · Gold-API | 仅供参考，不构成投资建议</div>`;
+}
+
+// ==================== MODAL ====================
+function showDetail(title,body,type){
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('modalBody').textContent=body;
+  // Add relevant external links based on factor
+  const linkMap={
+    '美联储降息预期':[{url:'https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html',text:'CME FedWatch 降息概率'}],
+    '美联储鹰派风险':[{url:'https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html',text:'CME FedWatch 降息概率'},{url:'https://www.federalreserve.gov/newsevents.htm',text:'美联储官网'}],
+    '全球央行持续购金':[{url:'https://www.gold.org/goldhub/data/gold-demand-trends',text:'世界黄金协会 需求趋势'}],
+    '地缘政治风险':[{url:'https://www.matteoiacoviello.com/gpr.htm',text:'地缘政治风险指数 GPR'}],
+    '通胀韧性超预期':[{url:'https://fred.stlouisfed.org/series/T10YIE',text:'10Y盈亏平衡通胀率'},{url:'https://www.bls.gov/cpi/',text:'美国CPI数据'}],
+    '通胀预期回落':[{url:'https://fred.stlouisfed.org/series/T10YIE',text:'10Y盈亏平衡通胀率'}],
+    '美元指数走弱':[{url:'https://www.tradingview.com/symbols/TVC-DXY/',text:'TradingView DXY'},{url:'https://www.ice.com/forex/usdx',text:'ICE 美元指数'}],
+    '美元指数反弹':[{url:'https://www.tradingview.com/symbols/TVC-DXY/',text:'TradingView DXY'}],
+    '美债实际收益率下行':[{url:'https://www.treasury.gov/resource-center/data-chart-center/interest-rates/',text:'美国财政部 TIPS'}],
+    '风险偏好回升':[{url:'https://www.cboe.com/tradable_products/vix/',text:'CBOE VIX'}],
+    '技术面超买回调':[{url:'https://www.tradingview.com/symbols/XAUUSD/',text:'TradingView 黄金'}],
+    '美国经济数据强劲':[{url:'https://fred.stlouisfed.org/',text:'FRED 经济数据库'},{url:'https://www.bls.gov/',text:'美国劳工统计局'}],
+    '地缘局势缓和':[{url:'https://www.matteoiacoviello.com/gpr.htm',text:'地缘政治风险指数 GPR'}]
+  };
+  const links=linkMap[title]||[];
+  document.getElementById('modalLinks').innerHTML=links.map(l=>
+    `<a href="${l.url}" target="_blank" rel="noopener">🔗 ${l.text}</a>`
+  ).join('');
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('show');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+// ==================== HISTORY ====================
+function loadHistory(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');}catch(e){return[];}}
+function saveHistory(data){localStorage.setItem(STORAGE_KEY,JSON.stringify(data));}
+
+function autoVerifyLastPrediction(currentPrice){
+  // Auto-verify the last pending prediction by comparing price movement
+  const history=loadHistory();
+  const lastPending=history.find(r=>r.verified===null&&r.shfePrice!=null);
+  if(!lastPending)return null;
+  const prevPrice=lastPending.shfePrice;
+  const change=currentPrice-prevPrice;
+  const bullPct=lastPending.bullPct;
+  // Determine correctness based on direction match
+  if(Math.abs(change)<1.5)return null; // Too small to judge, keep pending
+  let correct=null;
+  if(bullPct>=60&&change>0)correct=true;       // Predicted bullish, price rose
+  else if(bullPct>=60&&change<0)correct=false; // Predicted bullish, price fell
+  else if(bullPct<=40&&change<0)correct=true;  // Predicted bearish, price fell
+  else if(bullPct<=40&&change>0)correct=false; // Predicted bearish, price rose
+  else return null; // Neutral zone (40-60), leave for manual
+  // Mark it
+  lastPending.verified=correct;
+  lastPending.verifiedAt=new Date().toISOString();
+  lastPending.autoVerified=true;
+  lastPending.verifyNote=`金价从 ¥${prevPrice.toFixed(2)} → ¥${currentPrice.toFixed(2)} (${change>=0?'+':''}${change.toFixed(2)})`;
+  saveHistory(history);
+  return correct;
+}
+
+function saveQueryRecord(shfe,intl,dxy,vix,us10y){
+  if(!currentVerdict)return;
+  const v=currentVerdict,now=new Date();
+  // Auto-verify previous prediction before saving new one
+  if(shfe&&shfe.price)autoVerifyLastPrediction(shfe.price);
+  const record={
+    id:Date.now(),time:now.toISOString(),timeDisplay:now.toLocaleString('zh-CN'),
+    verdict:v.verdict,bullPct:v.bullPct,bearPct:v.bearPct,
+    shfePrice:shfe?shfe.price:null,shfeChgPct:shfe?shfe.chgPct:null,
+    intlPrice:intl?intl.price:null,
+    dxy:dxy?dxy.regularMarketPrice:null,vix:vix?vix.regularMarketPrice:null,
+    us10y:us10y?us10y.regularMarketPrice:null,
+    signals:generateSignals(shfe,intl,dxy,vix,us10y).map(s=>s.text),
+    verified:null,autoVerified:false
+  };
+  const history=loadHistory();history.unshift(record);
+  if(history.length>200)history.length=200;
+  saveHistory(history);
+  renderHistory();updateAccuracy();
+}
+
+function verifyPrediction(id,correct){
+  const history=loadHistory();
+  const r=history.find(r=>r.id===id);
+  if(r){
+    r.verified=correct;
+    r.verifiedAt=new Date().toISOString();
+    r.autoVerified=false; // Mark as manually verified
+    r.verifyNote=null;
+    saveHistory(history);
+    renderHistory();
+    updateAccuracy();
+  }
+}
+
+function updateAccuracy(){
+  const history=loadHistory();
+  let correct=0,wrong=0,pending=0;
+  history.forEach(r=>{if(r.verified===true)correct++;else if(r.verified===false)wrong++;else pending++;});
+  document.getElementById('accCorrect').textContent=correct;
+  document.getElementById('accWrong').textContent=wrong;
+  document.getElementById('accPending').textContent=pending;
+  const total=correct+wrong;
+  document.getElementById('accRate').textContent=total>0?(correct/total*100).toFixed(1)+'%':'--';
+}
+
+function renderHistory(){
+  const history=loadHistory();
+  let filtered;
+  if(currentHistoryTab==='pending')filtered=history.filter(r=>r.verified===null);
+  else if(currentHistoryTab==='verified')filtered=history.filter(r=>r.verified!==null);
+  else filtered=history;
+  const el=document.getElementById('historyList');
+  if(!filtered.length){el.innerHTML='<div style="text-align:center;padding:20px;color:#555;font-size:12px">暂无记录</div>';return;}
+  el.innerHTML=filtered.map(r=>{
+    let statusHTML='';
+    if(r.verified===true){
+      const autoTag=r.autoVerified?' 🤖自动验证':' ✋手动确认';
+      statusHTML=`<div class="h-result correct">✅ 预测正确${autoTag}</div>`;
+      if(r.verifyNote)statusHTML+=`<div style="font-size:9px;color:#666;margin-top:2px">${r.verifyNote}</div>`;
+    }else if(r.verified===false){
+      const autoTag=r.autoVerified?' 🤖自动验证':' ✋手动确认';
+      statusHTML=`<div class="h-result wrong">❌ 预测错误${autoTag}</div>`;
+      if(r.verifyNote)statusHTML+=`<div style="font-size:9px;color:#666;margin-top:2px">${r.verifyNote}</div>`;
+    }else{
+      statusHTML=`<div class="h-verify"><button class="verify-btn correct" onclick="verifyPrediction(${r.id},true)">✅ 正确</button><button class="verify-btn wrong" onclick="verifyPrediction(${r.id},false)">❌ 错误</button></div>`;
+    }
+    const macros=[];
+    if(r.dxy)macros.push(`DXY ${r.dxy.toFixed(1)}`);
+    if(r.vix)macros.push(`VIX ${r.vix.toFixed(1)}`);
+    if(r.us10y)macros.push(`10Y ${r.us10y.toFixed(2)}%`);
+    return `<div class="history-item">
+      <div class="h-header"><span class="h-verdict" style="color:${r.bullPct>=60?'#00e676':r.bullPct<=40?'#ff5252':'#ffc107'}">${r.verdict}</span><span class="h-time">${r.timeDisplay}</span></div>
+      <div class="h-price">沪金 ¥${formatPrice(r.shfePrice)} | 国际 $${r.intlPrice?r.intlPrice.toFixed(2):'--'} | ${macros.join(' | ')}</div>
+      <div class="h-scores"><span style="color:#00e676">看涨 ${r.bullPct}%</span><span style="color:#ff5252">看跌 ${r.bearPct}%</span></div>
+      ${statusHTML}
+    </div>`;
+  }).join('');
+}
+
+function switchHistoryTab(tab){currentHistoryTab=tab;document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));event.target.classList.add('active');renderHistory();}
+function clearHistory(){if(confirm('确定清空所有历史记录？')){localStorage.removeItem(STORAGE_KEY);renderHistory();updateAccuracy();}}
+
+// ==================== FACTOR ENCYCLOPEDIA ====================
+const encyclopediaFactors = [
+  {icon:'💵',name:'美元指数 (DXY)',correlation:'negative',stars:5,
+   principle:'美元是黄金的计价货币。美元走强 → 以美元计价的黄金对非美买家变贵 → 需求下降 → 金价下跌。两者呈高度负相关，相关系数约 -0.8。美元指数每上涨1%，金价平均下跌约0.5-1%。',
+   dataNote:'当前可通过实时看板查看DXY实时数据。DXY低于100时对黄金构成支撑，高于105则形成压力。',
+   links:[{url:'https://www.tradingview.com/symbols/TVC-DXY/',text:'TradingView DXY'},{url:'https://www.ice.com/forex/usdx',text:'ICE 官方美元指数'},{url:'https://fred.stlouisfed.org/series/DTWEXBGS',text:'FRED 贸易加权美元'}]},
+  {icon:'🏦',name:'美联储利率政策',correlation:'negative',stars:5,
+   principle:'黄金是零息资产，本身不产生利息。当美联储加息 → 生息资产（债券、存款）更具吸引力 → 持有黄金的机会成本上升 → 金价下跌。反之降息则利好黄金。这是黄金定价最核心的变量。',
+   dataNote:'关注CME FedWatch Tool实时显示的降息概率。市场若定价年内2-3次降息，对黄金构成强力支撑。',
+   links:[{url:'https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html',text:'CME FedWatch 降息概率'},{url:'https://www.federalreserve.gov/newsevents.htm',text:'美联储官网'},{url:'https://fred.stlouisfed.org/series/FEDFUNDS',text:'FRED 联邦基金利率'}]},
+  {icon:'📊',name:'通胀预期',correlation:'positive',stars:4,
+   principle:'黄金被视为抗通胀资产。通胀上升 → 货币购买力下降 → 投资者买入黄金保值 → 金价上涨。关键看"通胀预期"而非当前通胀——市场交易的是预期。',
+   dataNote:'关注美国10年期盈亏平衡通胀率（T10YIE），该指标反映市场对未来10年平均通胀的预期。',
+   links:[{url:'https://fred.stlouisfed.org/series/T10YIE',text:'FRED 10Y盈亏平衡通胀率'},{url:'https://www.bls.gov/cpi/',text:'美国 CPI 数据'},{url:'https://fred.stlouisfed.org/series/PCE',text:'FRED 核心PCE'}]},
+  {icon:'📉',name:'美债实际收益率',correlation:'negative',stars:5,
+   principle:'实际收益率 = 名义收益率 - 通胀预期。这是黄金的"替代成本"——实际收益率越高，持有黄金越不划算。10年期TIPS收益率与金价负相关度高达 -0.9，是最核心的定价锚。',
+   dataNote:'美国10年期TIPS收益率可在美国财政部官网实时查询。当前约2%左右，若下行至1.5%以下将显著利好黄金。',
+   links:[{url:'https://www.treasury.gov/resource-center/data-chart-center/interest-rates/',text:'美国财政部 TIPS 收益率'},{url:'https://fred.stlouisfed.org/series/DFII10',text:'FRED 10Y TIPS'}]},
+  {icon:'🌍',name:'地缘政治风险',correlation:'positive',stars:4,
+   principle:'战争、制裁、政治动荡 → 市场不确定性上升 → 资金涌入避险资产。黄金作为"终极避险资产"，在地缘危机期间表现突出。但需注意：地缘溢价来得快去得也快，局势缓和后金价可能迅速回落。',
+   dataNote:'地缘政治风险指数（GPR Index）由美联储经济学家编制，量化全球地缘紧张程度。',
+   links:[{url:'https://www.matteoiacoviello.com/gpr.htm',text:'地缘政治风险指数 GPR'},{url:'https://www.cfr.org/global-conflict-tracker',text:'CFR 全球冲突追踪'}]},
+  {icon:'🏛️',name:'全球央行购金',correlation:'positive',stars:4,
+   principle:'全球央行是黄金市场最大的买家之一。2022年以来，央行购金量激增——去美元化趋势下，各国央行加速将外汇储备从美债转向黄金。这部分需求刚性极强，为金价提供坚实底部。',
+   dataNote:'世界黄金协会每季度发布《黄金需求趋势》报告，详列各国央行购金数据。中国央行已连续18个月增持。',
+   links:[{url:'https://www.gold.org/goldhub/data/gold-demand-trends',text:'世界黄金协会 需求趋势'},{url:'https://www.gold.org/goldhub/data/gold-reserves-by-country',text:'各国黄金储备数据'}]},
+  {icon:'📦',name:'黄金ETF持仓',correlation:'positive',stars:3,
+   principle:'黄金ETF（如SPDR Gold Trust）是全球最大的黄金投资工具之一。ETF持仓量增加 → 实物黄金需求增加 → 金价上涨。ETF资金流向反映机构投资者对黄金的态度。',
+   dataNote:'SPDR Gold Trust（代码GLD）是全球最大黄金ETF，每日公布持仓吨数。持仓持续增加往往预示金价上行。',
+   links:[{url:'https://www.spdrgoldshares.com/',text:'SPDR Gold Trust 官网'},{url:'https://www.gold.org/goldhub/data/gold-etfs-holdings-and-flows',text:'世界黄金协会 ETF数据'}]},
+  {icon:'😰',name:'VIX 恐慌指数',correlation:'positive',stars:3,
+   principle:'VIX衡量市场恐慌程度。VIX飙升 → 市场恐慌 → 资金涌入黄金避险。历史经验：VIX突破30往往对应金价阶段性高点，因市场极端恐慌后常有流动性危机导致黄金被抛售（如2020年3月）。',
+   dataNote:'当前可通过实时看板查看VIX实时数据。VIX<20市场平静，20-30警惕，>30高度恐慌。',
+   links:[{url:'https://www.cboe.com/tradable_products/vix/',text:'CBOE VIX 官网'},{url:'https://www.tradingview.com/symbols/TVC-VIX/',text:'TradingView VIX'}]},
+  {icon:'🏭',name:'美国经济数据',correlation:'negative',stars:3,
+   principle:'非农就业、GDP、CPI等关键数据直接影响美联储政策预期。数据强劲 → 降息预期降温 → 美元/利率上行 → 金价承压。反之数据疲软则利好黄金。每周初请失业金、每月非农是最敏感的短期催化剂。',
+   dataNote:'所有美国经济数据可在FRED（美联储经济数据库）和BLS（劳工统计局）官网免费查询。',
+   links:[{url:'https://fred.stlouisfed.org/',text:'FRED 经济数据库'},{url:'https://www.bls.gov/',text:'美国劳工统计局'},{url:'https://www.bea.gov/',text:'美国经济分析局'}]},
+  {icon:'📈',name:'技术面分析',correlation:'neutral',stars:3,
+   principle:'技术分析通过价格形态、成交量、指标（RSI、MACD、均线）判断趋势和买卖点。黄金的技术面与基本面相互验证：基本面定方向，技术面定时机。超买/超卖信号对短线交易尤其重要。',
+   dataNote:'TradingView提供全球最丰富的技术分析工具和社区观点，可查看XAUUSD的实时技术指标和用户分析。',
+   links:[{url:'https://www.tradingview.com/symbols/XAUUSD/',text:'TradingView XAUUSD'},{url:'https://www.kitco.com/gold-price-today-usa/',text:'Kitco 黄金'}]}
+];
+
+function renderEncyclopedia(){
+  const bullish=encyclopediaFactors.filter(f=>f.correlation==='positive');
+  const bearish=encyclopediaFactors.filter(f=>f.correlation==='negative');
+  const neutral=encyclopediaFactors.filter(f=>f.correlation==='neutral');
+
+  function renderFactorCard(f,i,section){
+    return `<div class="factor-card" id="factorCard${section}${i}">
+      <div class="f-summary" onclick="toggleFactor('${section}${i}')">
+        <span class="f-icon">${f.icon}</span>
+        <div class="f-info">
+          <div class="f-name">${f.name}</div>
+          <div class="f-meta">${f.correlation==='positive'?'走强 → 金价↑':f.correlation==='negative'?'走强 → 金价↓':'影响方向待定'}</div>
+        </div>
+        <span class="f-correlation ${f.correlation==='positive'?'positive':'negative'}">${f.correlation==='positive'?'利多':f.correlation==='negative'?'利空':'中性'}</span>
+        <span class="f-stars">${'★'.repeat(f.stars)}</span>
+        <span class="f-expand">▾</span>
+      </div>
+      <div class="f-detail">
+        <div class="f-principle">📖 <b>作用原理：</b>${f.principle}</div>
+        <div class="f-data-note">📊 ${f.dataNote}</div>
+        <div class="f-links">
+          ${f.links.map(l=>`<a href="${l.url}" target="_blank" rel="noopener">🔗 ${l.text}</a>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('bullEncyList').innerHTML=bullish.map((f,i)=>renderFactorCard(f,i,'bull')).join('');
+  document.getElementById('bearEncyList').innerHTML=bearish.map((f,i)=>renderFactorCard(f,i,'bear')).join('');
+}
+
+function toggleFactor(id){
+  const card=document.getElementById('factorCard'+id);
+  if(card)card.classList.toggle('expanded');
+}
+
+function toggleFactor(i){
+  const card=document.getElementById('factorCard'+i);
+  card.classList.toggle('expanded');
+}
+
+// ==================== MAIN REFRESH ====================
+async function refreshAll(){
+  const btn=document.getElementById('queryBtn');
+  if(btn){btn.classList.add('loading');btn.textContent='⏳ 查询中...';}
+  try{
+    const [intl,shfe,dxy,vix,us10y,usdcny]=await Promise.all([
+      fetchGoldPrice(),fetchAU2606(),
+      fetchYahoo('DX-Y.NYB'),fetchYahoo('%5EVIX'),fetchYahoo('%5ETNX'),
+      fetchForexRate()
+    ]);
+    updatePriceUI(intl,shfe,dxy,vix,us10y,usdcny);
+    const signals=generateSignals(shfe,intl,dxy,vix,us10y);
+    renderSignals(signals);
+    renderSummary(shfe,intl,dxy,vix,us10y);
+    saveQueryRecord(shfe,intl,dxy,vix,us10y);
+  }catch(e){console.error('刷新失败:',e);}
+  if(btn){btn.classList.remove('loading');btn.textContent='🔍 一键查询最新信号';}
+}
+
+// ==================== INIT ====================
+renderEncyclopedia();
+renderFactors();
+refreshAll();
+renderHistory();
+updateAccuracy();
+// 不再自动刷新，仅手动点击按钮查询
+</script>
+</body>
+</html>
