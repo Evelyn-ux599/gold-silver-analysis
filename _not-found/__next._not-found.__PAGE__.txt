@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[22016,["/_next/static/chunks/0ef4q_v5wr54w.js","/_next/static/chunks/0d3shmwh5_nmn.js"],""]
+3:I[97367,["/_next/static/chunks/0ef4q_v5wr54w.js","/_next/static/chunks/0d3shmwh5_nmn.js"],"OutletBoundary"]
+4:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[["$","div",null,{"className":"min-h-[80vh] flex items-center justify-center","children":["$","div",null,{"className":"text-center px-6","children":[["$","div",null,{"className":"text-8xl font-extrabold mb-4 bg-gradient-to-r from-accent-blue to-accent-purple bg-clip-text text-transparent","children":"404"}],["$","h2",null,{"className":"text-xl font-semibold text-text-primary mb-2","children":"页面未找到"}],["$","p",null,{"className":"text-text-secondary mb-8","children":"你访问的页面不存在或已被移动。"}],["$","$L2",null,{"href":"/","className":"inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-accent-blue/10 text-accent-blue border border-accent-blue/20 hover:bg-accent-blue/20 transition-colors text-sm font-medium","children":"返回首页"}]]}]}],null,["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"QeZpuKUuaST8q9qf2zznF"}
+5:null

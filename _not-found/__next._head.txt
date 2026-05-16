@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[97367,["/_next/static/chunks/0ef4q_v5wr54w.js","/_next/static/chunks/0d3shmwh5_nmn.js"],"ViewportBoundary"]
+3:I[97367,["/_next/static/chunks/0ef4q_v5wr54w.js","/_next/static/chunks/0d3shmwh5_nmn.js"],"MetadataBoundary"]
+4:"$Sreact.suspense"
+5:I[27201,["/_next/static/chunks/0ef4q_v5wr54w.js","/_next/static/chunks/0d3shmwh5_nmn.js"],"IconMark"]
+0:{"rsc":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L2",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]}],["$","div",null,{"hidden":true,"children":["$","$L3",null,{"children":["$","$4",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Guanchulin — 养 Agent 变现 · 复利追踪"}],["$","meta","1",{"name":"description","content":"记录一个 AI 产品经理如何养 Agent 做内容变现。从 0 到 1 搭建自动化写作系统，追踪 Agent 数量、文章产出和复利增长。"}],["$","link","2",{"rel":"icon","href":"/favicon.ico?favicon.0x3dzn~oxb6tn.ico","sizes":"256x256","type":"image/x-icon"}],["$","$L5","3",{}]]}]}]}],null]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"QeZpuKUuaST8q9qf2zznF"}

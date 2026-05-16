@@ -6,9 +6,9 @@ import SkillCard from "@/components/SkillCard";
 
 const SKILLS = [
   {
-    title: "公众号写作 Skill",
-    description: "Vera 人设 · 标题轮换策略(悬念/反常识/数据) · 6段式文章模板 · 封面自动配色，Agent 可独立完成 80% 写作",
-    produces: "每天 1 篇公众号长文，已产出 6 篇",
+    title: "Vera 公众号写作 Skill",
+    description: "Vera 人设 · 标题轮换(悬念/反常识/数据) · 6段式模板 · 论文式引用 · 数据来源区块 · 封面自动生成",
+    produces: "每天 1 篇深度信息差分析，已产出 7 篇",
     status: "running" as const,
   },
   {
@@ -19,7 +19,7 @@ const SKILLS = [
   },
   {
     title: "封面自动生成 Skill",
-    description: "Python Pillow 程序化绘图 · 标题关键词自动匹配4种主题配色 · 发光效果+网格线装饰",
+    description: "Python PIL 程序化绘图 · 标题关键词自动匹配4种主题配色 · 纯像素渲染零外部依赖",
     produces: "所有文章的微信封面图，无需设计工具",
     status: "running" as const,
   },
@@ -38,7 +38,13 @@ const SKILLS = [
   {
     title: "白银走势分析看板",
     description: "6利多+6利空因素 · 光伏/工业独特驱动 · 金银比追踪 · SLV ETF 实时持仓",
-    produces: "白银专属看板，双重属性（贵金属+工业）分析",
+    produces: "白银专属看板，双属性（贵金属+工业）分析",
+    status: "running" as const,
+  },
+  {
+    title: "Hermes Agent 本地部署",
+    description: "macOS 本地 CLI 部署 · QQ + iCloud 双通道 · 公众号草稿自动提交 · WeChat API 纯 stdlib 封装",
+    produces: "Agent 可读写本地文件、操作桌面、提交公众号草稿箱",
     status: "running" as const,
   },
 ];
